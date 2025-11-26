@@ -6,7 +6,7 @@
       <Input
         v-model="localFilters.search"
         placeholder="Type id or name .."
-        class="text-black"
+        class="w-full rounded-md border border-white/10 bg-neutral-900 p-2 text-white placeholder:text-gray-400"
         @input="handleFilterChange"
       />
     </div>
@@ -24,11 +24,11 @@
         >
           <option value="">All</option>
           <option
-            v-for="character in uniqueTraits.characters"
+            v-for="character in sortedCharacters"
             :key="character"
             :value="character"
           >
-            {{ character }}
+            {{ character }} ({{ traitCounts.characters[character] || 0 }})
           </option>
         </select>
       </div>
@@ -42,11 +42,11 @@
         >
           <option value="">All</option>
           <option
-            v-for="lineage in uniqueTraits.dnaLineages"
+            v-for="lineage in sortedDnaLineages"
             :key="lineage"
             :value="lineage"
           >
-            {{ lineage }}
+            {{ lineage }} ({{ traitCounts.dnaLineages[lineage] || 0 }})
           </option>
         </select>
       </div>
@@ -60,11 +60,11 @@
         >
           <option value="">All</option>
           <option
-            v-for="memetic in uniqueTraits.dnaMemetics"
+            v-for="memetic in sortedDnaMemetics"
             :key="memetic"
             :value="memetic"
           >
-            {{ memetic }}
+            {{ memetic }} ({{ traitCounts.dnaMemetics[memetic] || 0 }})
           </option>
         </select>
       </div>
@@ -78,11 +78,11 @@
         >
           <option value="">All</option>
           <option
-            v-for="portrait in uniqueTraits.dnaArtistSelfPortraits"
+            v-for="portrait in sortedDnaArtistSelfPortraits"
             :key="portrait"
             :value="portrait"
           >
-            {{ portrait }}
+            {{ portrait }} ({{ traitCounts.dnaArtistSelfPortraits[portrait] || 0 }})
           </option>
         </select>
       </div>
@@ -96,11 +96,11 @@
         >
           <option value="">All</option>
           <option
-            v-for="collection in uniqueTraits.dnaMOCACollections"
+            v-for="collection in sortedDnaMOCACollections"
             :key="collection"
             :value="collection"
           >
-            {{ collection }}
+            {{ collection }} ({{ traitCounts.dnaMOCACollections[collection] || 0 }})
           </option>
         </select>
       </div>
@@ -114,11 +114,11 @@
         >
           <option value="">All</option>
           <option
-            v-for="background in uniqueTraits.backgrounds"
+            v-for="background in sortedBackgrounds"
             :key="background"
             :value="background"
           >
-            {{ background }}
+            {{ background }} ({{ traitCounts.backgrounds[background] || 0 }})
           </option>
         </select>
       </div>
@@ -132,11 +132,11 @@
         >
           <option value="">All</option>
           <option
-            v-for="texture in uniqueTraits.backgroundTextures"
+            v-for="texture in sortedBackgroundTextures"
             :key="texture"
             :value="texture"
           >
-            {{ texture }}
+            {{ texture }} ({{ traitCounts.backgroundTextures[texture] || 0 }})
           </option>
         </select>
       </div>
@@ -150,11 +150,11 @@
         >
           <option value="">All</option>
           <option
-            v-for="mood in uniqueTraits.moods"
+            v-for="mood in sortedMoods"
             :key="mood"
             :value="mood"
           >
-            {{ mood }}
+            {{ mood }} ({{ traitCounts.moods[mood] || 0 }})
           </option>
         </select>
       </div>
@@ -171,7 +171,8 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, watch, onMounted } from 'vue';
+import { ref, reactive, watch, onMounted, computed } from 'vue';
+import traitCountsData from '~/assets/data/trait-counts.json';
 // Button and Input are auto-imported by Nuxt
 
 // Define the filter interface
@@ -199,6 +200,21 @@ interface UniqueTraits {
   dnaMOCACollections: string[];
 }
 
+// Define trait counts interface
+interface TraitCounts {
+  backgrounds: Record<string, number>;
+  backgroundTextures: Record<string, number>;
+  characters: Record<string, number>;
+  moods: Record<string, number>;
+  dnaLineages: Record<string, number>;
+  dnaMemetics: Record<string, number>;
+  dnaArtistSelfPortraits: Record<string, number>;
+  dnaMOCACollections: Record<string, number>;
+}
+
+// Load trait counts
+const traitCounts = traitCountsData as TraitCounts;
+
 // Props
 const props = defineProps<{
   filters: Filters;
@@ -209,6 +225,71 @@ const props = defineProps<{
 const emit = defineEmits<{
   (e: 'update:filters', filters: Filters): void;
 }>();
+
+// Create sorted versions of traits (by rarity - ascending)
+const sortedCharacters = computed(() => {
+  return [...props.uniqueTraits.characters].sort((a, b) => {
+    const countA = traitCounts.characters[a] || 0;
+    const countB = traitCounts.characters[b] || 0;
+    return countA - countB;
+  });
+});
+
+const sortedBackgrounds = computed(() => {
+  return [...props.uniqueTraits.backgrounds].sort((a, b) => {
+    const countA = traitCounts.backgrounds[a] || 0;
+    const countB = traitCounts.backgrounds[b] || 0;
+    return countA - countB;
+  });
+});
+
+const sortedBackgroundTextures = computed(() => {
+  return [...props.uniqueTraits.backgroundTextures].sort((a, b) => {
+    const countA = traitCounts.backgroundTextures[a] || 0;
+    const countB = traitCounts.backgroundTextures[b] || 0;
+    return countA - countB;
+  });
+});
+
+const sortedMoods = computed(() => {
+  return [...props.uniqueTraits.moods].sort((a, b) => {
+    const countA = traitCounts.moods[a] || 0;
+    const countB = traitCounts.moods[b] || 0;
+    return countA - countB;
+  });
+});
+
+const sortedDnaLineages = computed(() => {
+  return [...props.uniqueTraits.dnaLineages].sort((a, b) => {
+    const countA = traitCounts.dnaLineages[a] || 0;
+    const countB = traitCounts.dnaLineages[b] || 0;
+    return countA - countB;
+  });
+});
+
+const sortedDnaMemetics = computed(() => {
+  return [...props.uniqueTraits.dnaMemetics].sort((a, b) => {
+    const countA = traitCounts.dnaMemetics[a] || 0;
+    const countB = traitCounts.dnaMemetics[b] || 0;
+    return countA - countB;
+  });
+});
+
+const sortedDnaArtistSelfPortraits = computed(() => {
+  return [...props.uniqueTraits.dnaArtistSelfPortraits].sort((a, b) => {
+    const countA = traitCounts.dnaArtistSelfPortraits[a] || 0;
+    const countB = traitCounts.dnaArtistSelfPortraits[b] || 0;
+    return countA - countB;
+  });
+});
+
+const sortedDnaMOCACollections = computed(() => {
+  return [...props.uniqueTraits.dnaMOCACollections].sort((a, b) => {
+    const countA = traitCounts.dnaMOCACollections[a] || 0;
+    const countB = traitCounts.dnaMOCACollections[b] || 0;
+    return countA - countB;
+  });
+});
 
 // Local filters state
 const localFilters = reactive({ ...props.filters });

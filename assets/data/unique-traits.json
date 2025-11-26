@@ -2,8 +2,6 @@
   "backgrounds": [
     "Abstract Expressionism",
     "African Textile",
-    "Alien",
-    "Ape",
     "Architecture",
     "Cave Art",
     "Cubism",
@@ -29,6 +27,8 @@
     "Photo"
   ],
   "characters": [
+    "Alien",
+    "Ape",
     "DeCC0",
     "Pixel DeCC0",
     "Toter DeCC0",

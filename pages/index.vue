@@ -579,7 +579,13 @@ const filteredTokens = computed(() => {
 
   // Apply trait filters client-side
   if (filters.character) {
-    results = results.filter(token => token.decc0_type === filters.character);
+    // Special case: Alien and Ape are stored in background_category field
+    // but we show them in the character dropdown because they're rare and special
+    if (filters.character === 'Alien' || filters.character === 'Ape') {
+      results = results.filter(token => token.background_category === filters.character);
+    } else {
+      results = results.filter(token => token.decc0_type === filters.character);
+    }
   }
   if (filters.mood) {
     results = results.filter(token => token.mood === filters.mood);
