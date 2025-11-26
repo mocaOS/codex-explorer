@@ -96,10 +96,10 @@ Each Art DeCC0 includes extensive metadata:
 - **ElizaOS Agent Profile** - Complete AI agent configuration including system prompts, bio, topics, knowledge, and conversation examples
 
 ### 🎨 Technical Highlights
-- **Single-Page Application** - Nuxt 3 with Vue 3 Composition API
+- **Server-Side Rendering** - Nuxt 3 SSR with Vue 3 Composition API for optimal performance
 - **Optimized Data Loading** - Fetches all 10k items in one call (~2-3 seconds)
 - **Virtual Pagination** - Displays 36 items at a time, increases on scroll
-- **Client-Side Everything** - All filtering, sorting, searching, and effects happen instantly
+- **Client-Side Interactivity** - All filtering, sorting, searching, and effects happen instantly
 - **Responsive Design** - Works seamlessly on desktop, tablet, and mobile
 - **Direct IPFS Access** - Download full-resolution images and access component layers
 - **Interactive Grid** - Real-time zoom, quality switching, and hover effects
@@ -112,8 +112,8 @@ Each Art DeCC0 includes extensive metadata:
 ## 🚀 Getting Started
 
 ### Prerequisites
-- Node.js 18+ or Bun
-- npm, pnpm, yarn, or bun
+- Node.js 18+
+- npm
 
 ### Installation
 
@@ -122,11 +122,8 @@ Each Art DeCC0 includes extensive metadata:
 git clone https://github.com/your-org/codex-explorer.git
 cd codex-explorer
 
-# Install dependencies (choose one)
+# Install dependencies
 npm install
-pnpm install
-yarn install
-bun install
 ```
 
 ### Development
@@ -135,23 +132,24 @@ Start the development server on `http://localhost:3000`:
 
 ```bash
 npm run dev
-# or
-pnpm dev
-# or
-yarn dev
-# or
-bun run dev
 ```
 
 ### Production Build
 
+This application uses **Nuxt 3 with Server-Side Rendering (SSR)** for optimal performance and SEO.
+
 ```bash
-# Build for production
+# Build for production (SSR)
 npm run build
 
 # Preview production build locally
 npm run preview
+
+# Start production server
+node .output/server/index.mjs
 ```
+
+The SSR build generates a Node.js server in `.output/server/` that handles both server-side rendering and API routes. Deploy this to any Node.js-compatible hosting platform (Vercel, Netlify, DigitalOcean, AWS, etc.).
 
 ---
 
@@ -167,7 +165,7 @@ npm run preview
 7. **Fullscreen Integration**: Browser Fullscreen API triggered for Museum Mode with state synchronization
 
 ### Technology Stack
-- **Framework**: Nuxt 3
+- **Framework**: Nuxt 3 with Server-Side Rendering (SSR)
 - **UI Components**: Custom components with Tailwind CSS
 - **State Management**: Vue 3 Composition API with reactive refs
 - **Data Fetching**: TanStack Query (Vue Query) for caching and state
