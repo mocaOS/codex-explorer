@@ -20,9 +20,10 @@ export default defineNuxtPlugin((nuxt) => {
     defaultOptions: {
       queries: {
         staleTime: 5 * 60 * 1000,
-        refetchOnWindowFocus: true,
-        refetchOnReconnect: true,
-        refetchOnMount: "always",
+        refetchOnWindowFocus: false, // Don't refetch when tab regains focus
+        refetchOnReconnect: false, // Don't refetch on network reconnect
+        refetchOnMount: false, // Don't refetch when component remounts
+        retry: 1, // Only retry once on failure
       },
     },
   });

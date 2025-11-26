@@ -41,13 +41,13 @@ The Museum of Crypto Art isn't just archiving the past—it's **seeding the futu
 ### 🖼️ Gallery Experience
 - **10,000 Art DeCC0s** displayed in a responsive grid layout
 - **Instant infinite scroll** with virtual pagination
-- **Three sort modes**: Ascending, Descending, and True Random
+- **Three sort modes**: Ascending, Descending, and True Random (client-side sorting)
 - **Dynamic zoom control** - 0% to 100% zoom slider (10 columns to 1 column)
 - **Quality selector** - Switch between 256p, 1024p, and 4K (full IPFS resolution)
 - **Sticky control bar** - Controls stay visible while scrolling for quick adjustments
 - **Filter toggle** - Show/hide sidebar in both normal and museum modes
 - **Optimized image delivery** via Directus asset transformations and IPFS gateway
-- **Single API call architecture** - loads entire collection once for blazing-fast performance
+- **Zero-refetch architecture** - loads entire collection once, then instant filtering with zero API calls
 
 ### ✨ Interactive Features (Beta)
 - **🎭 Hover-to-Swap Mode** (Easter Egg)
@@ -103,10 +103,12 @@ Each Art DeCC0 includes extensive metadata:
 - **ElizaOS Agent Profile** - Complete AI agent configuration including system prompts, bio, topics, knowledge, and conversation examples
 
 ### 🎨 Technical Highlights
-- **Server-Side Rendering** - Nuxt 3 SSR with Vue 3 Composition API for optimal performance
-- **Optimized Data Loading** - Fetches all 10k items in one call (~2-3 seconds)
+- **Server-Side Rendering** - Nuxt 3 SSR with Vue 3 Composition API for instant page shells
+- **Client-Only Data Fetching** - API calls happen in browser for optimal server performance
+- **Optimized Data Loading** - Fetches all 10k items in one call (~2-3 seconds), cached permanently
 - **Virtual Pagination** - Displays 36 items at a time, increases on scroll
-- **Client-Side Interactivity** - All filtering, sorting, searching, and effects happen instantly
+- **Zero-Refetch Architecture** - Static query key ensures no unnecessary API calls on filter/sort changes
+- **Instant Client-Side Filtering** - Optimized Set-based filtering for real-time results
 - **Responsive Design** - Works seamlessly on desktop, tablet, and mobile
 - **Direct IPFS Access** - Download full-resolution images and access component layers
 - **Interactive Grid** - Real-time zoom, quality switching, and hover effects
@@ -141,6 +143,8 @@ Start the development server on `http://localhost:3000`:
 npm run dev
 ```
 
+**Performance Note**: On first load, the page becomes interactive in ~400ms, then loads all 10,000 tokens in the background (~2-3 seconds). After initial load, all filtering/sorting happens instantly with zero API calls.
+
 ### Production Build
 
 This application uses **Nuxt 3 with Server-Side Rendering (SSR)** for optimal performance and SEO.
@@ -163,28 +167,33 @@ The SSR build generates a Node.js server in `.output/server/` that handles both 
 ## 🏗️ Architecture
 
 ### Data Flow
-1. **Initial Load**: Single API call to `https://api.decc0s.com/items/codex` fetches all 10,000 items with complete metadata (thumbnails for full composite, character-only, and background layers)
-2. **Client-Side Processing**: All filtering, sorting, and searching happens in-browser with no additional API calls
-3. **Virtual Rendering**: Only visible items (36 at a time) are rendered to the DOM
-4. **Infinite Scroll**: Display count increases by 36 as user scrolls
-5. **Dynamic Asset Loading**: Images load at current quality setting (256p/1024p/4K) with lazy loading
-6. **Interactive State Management**: Hover states, zoom levels, and quality preferences managed client-side
-7. **Fullscreen Integration**: Browser Fullscreen API triggered for Museum Mode with state synchronization
+1. **Server-Side Rendering**: Server renders page shell instantly (no data fetching during SSR)
+2. **Client Hydration**: Vue app becomes interactive in ~400ms after page load
+3. **Data Fetching**: Single API call to `https://api.decc0s.com/items/codex` fetches all 10,000 items with complete metadata (thumbnails for full composite, character-only, and background layers)
+4. **Permanent Caching**: Data stored in TanStack Query cache with static key - never refetches during session
+5. **Client-Side Processing**: All filtering, sorting, and searching happens in-browser using optimized algorithms
+6. **Virtual Rendering**: Only visible items (36 at a time) are rendered to the DOM
+7. **Infinite Scroll**: Display count increases by 36 as user scrolls
+8. **Dynamic Asset Loading**: Images load at current quality setting (256p/1024p/4K) with lazy loading
+9. **Interactive State Management**: Hover states, zoom levels, and quality preferences managed client-side
+10. **Fullscreen Integration**: Browser Fullscreen API triggered for Museum Mode with state synchronization
 
 ### Technology Stack
-- **Framework**: Nuxt 3 with Server-Side Rendering (SSR)
+- **Framework**: Nuxt 3 with Server-Side Rendering (SSR) for instant page shells
 - **UI Components**: Custom components with Tailwind CSS
-- **State Management**: Vue 3 Composition API with reactive refs
-- **Data Fetching**: TanStack Query (Vue Query) for caching and state
+- **State Management**: Vue 3 Composition API with reactive refs and computed memoization
+- **Data Fetching**: TanStack Query (Vue Query) configured for zero-refetch performance
 - **API Client**: Axios
 - **Image Processing**: Directus asset transformations
+- **Performance**: Client-side data loading, Set-based filtering, virtual pagination
 
 ### Key Components
 - `pages/index.vue` - Gallery view with filtering, zoom, quality, and interactive features
 - `pages/[tokenId].vue` - Detailed character profile page with hover preview
-- `components/filters/FilterSidebar.vue` - Filter controls and search
+- `components/filters/FilterSidebar.vue` - Filter controls and search with multi-select checkboxes
 - `components/ui/*` - Reusable UI components (Table, Button, Input, Skeleton)
 - `layouts/default.vue` - App layout with fullscreen state management
+- `plugins/vue-query.ts` - TanStack Query configuration optimized for performance
 
 ### Interactive Controls
 The gallery includes a comprehensive control bar with:
@@ -198,14 +207,15 @@ In Museum Mode, controls appear as floating overlay at the top center.
 
 ### Performance Strategy
 The Codex Explorer achieves exceptional performance by:
-1. **Loading all data upfront** - Single 10k item fetch (~2-3 seconds) includes all metadata
-2. **Virtual pagination** - Only renders visible items (36 at a time)
-3. **Pure JavaScript filtering** - No API calls for filter/sort/search changes
-4. **Dynamic quality loading** - Starts at 256p for fast initial load, upgradeable to 4K
-5. **Optimized asset delivery** - Uses Directus transformations (256px, 1024px) and IPFS for 4K
-6. **Client-side caching** - TanStack Query prevents unnecessary re-fetches
-7. **Smart zoom adaptation** - Automatically adjusts grid density for fullscreen mode
-8. **Reactive state management** - All interactive features update instantly without re-renders
+1. **Client-side data fetching** - API call only happens in browser (not during SSR) for fast page loads
+2. **Single 10k item fetch** - One API call (~2-3 seconds) loads entire collection with all metadata
+3. **Static query key** - Data cached permanently per session, zero refetches on filter/sort changes
+4. **Virtual pagination** - Only renders visible items (36 at a time), increases on scroll
+5. **Pure client-side filtering** - Instant results using optimized Set lookups and single-pass filtering
+6. **Dynamic quality loading** - Starts at 256p for fast initial load, upgradeable to 4K on-demand
+7. **Optimized asset delivery** - Uses Directus transformations (256px, 1024px) and IPFS for 4K
+8. **Smart zoom adaptation** - Automatically adjusts grid density for fullscreen mode
+9. **Reactive state management** - All interactive features update instantly without re-renders
 
 ---
 

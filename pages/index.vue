@@ -275,12 +275,16 @@
 </template>
 
 <script setup lang="ts">
+console.time('Page Setup Time');
+
 import { useInfiniteQuery } from "@tanstack/vue-query";
 import axios from "axios";
 import FilterSidebar from "~/components/filters/FilterSidebar.vue";
 import uniqueTraitsData from "~/assets/data/unique-traits.json";
 
 const { public: { config } } = useRuntimeConfig();
+
+console.timeEnd('Page Setup Time');
 
 const isMobileMenuOpen = useState("isMobileMenuOpen", () => false);
 
@@ -475,6 +479,7 @@ interface CodexToken {
 
 const { data: tokens, isLoading: isLoadingTokens, fetchNextPage, isFetchingNextPage, suspense: suspenseTokens, refetch } = useInfiniteQuery<CodexToken[]>({
   queryKey: [ "tokens" ], // Static key - fetch once, filter client-side
+  enabled: import.meta.client, // Only run on client-side for better performance
   queryFn: async ({ pageParam = 0 }) => {
     // Fetch ALL records upfront for better UX
     // This enables instant infinite scrolling without API delays
@@ -484,6 +489,8 @@ const { data: tokens, isLoading: isLoadingTokens, fetchNextPage, isFetchingNextP
       return []; // No more API calls after initial load
     }
 
+    console.time('API Fetch Time');
+    
     const limit = 10000; // Always fetch all items
     const offset = 0;
 
@@ -495,13 +502,19 @@ const { data: tokens, isLoading: isLoadingTokens, fetchNextPage, isFetchingNextP
       sort: 'id', // Simple ascending sort by default
     };
 
-    const { data } = await axios.get('https://api.decc0s.com/items/codex', { params });
-
-    const items = data.data as CodexToken[];
-
-    console.log(`✓ Loaded ${items.length} Art DeCC0s - all filtering happens client-side`);
-
-    return items;
+    try {
+      const { data } = await axios.get('https://api.decc0s.com/items/codex', { params });
+      const items = data.data as CodexToken[];
+      
+      console.timeEnd('API Fetch Time');
+      console.log(`✓ Loaded ${items.length} Art DeCC0s - all filtering happens client-side`);
+      
+      return items;
+    } catch (error) {
+      console.error('Failed to fetch tokens:', error);
+      console.timeEnd('API Fetch Time');
+      throw error;
+    }
   },
   initialPageParam: 0,
   getNextPageParam: () => {
@@ -528,6 +541,11 @@ uniqueTraits.dnaMOCACollections = uniqueTraitsData.dnaMOCACollections;
 const displayCount = ref(36);
 
 const allTokens = computed(() => {
+  // Skip during SSR for performance
+  if (import.meta.server) {
+    return [];
+  }
+  
   const allItems: CodexToken[] = [];
 
   tokens.value?.pages.forEach((page) => {
@@ -536,6 +554,16 @@ const allTokens = computed(() => {
 
   return allItems;
 });
+
+// Track when data loads for performance monitoring
+if (import.meta.client) {
+  watch(allTokens, (tokens) => {
+    if (tokens.length > 0) {
+      console.timeEnd('Data Load Time');
+      console.log(`✓ ${tokens.length} tokens ready for display`);
+    }
+  }, { immediate: true });
+}
 
 // Helper function to apply all filters (optimized with Sets for O(1) lookups)
 const applyFilters = (tokens: CodexToken[], filterState = filters) => {
@@ -590,29 +618,42 @@ const applyFilters = (tokens: CodexToken[], filterState = filters) => {
   });
 };
 
-// Watch filters to show calculating state with smart timing
+// Watch filters to show calculating state with smart timing (client-only)
 let calculatingTimeout: NodeJS.Timeout | null = null;
-watch(() => ({ ...filters }), async () => {
-  isCalculatingFilters.value = true;
-  
-  // Clear any existing timeout
-  if (calculatingTimeout) {
-    clearTimeout(calculatingTimeout);
+
+if (import.meta.client) {
+  watch(() => ({ ...filters }), async () => {
+    isCalculatingFilters.value = true;
+    
+    // Clear any existing timeout
+    if (calculatingTimeout) {
+      clearTimeout(calculatingTimeout);
+    }
+    
+    // Wait for next tick to let computed run
+    await nextTick();
+    
+    // Timeline: 0ms = click, 300ms = animation starts (if needed), 500ms = done
+    // This ensures animation has time to run if filtering takes long
+    calculatingTimeout = setTimeout(() => {
+      isCalculatingFilters.value = false;
+    }, 500);
+  }, { deep: true });
+}
+
+// Optimized: Memoized filtered results (client-side only for performance)
+const cachedFilteredTokens = computed(() => {
+  // Skip during SSR to prevent slowdown
+  if (import.meta.server) {
+    return [];
   }
   
-  // Wait for next tick to let computed run
-  await nextTick();
-  
-  // Timeline: 0ms = click, 300ms = animation starts (if needed), 500ms = done
-  // This ensures animation has time to run if filtering takes long
-  calculatingTimeout = setTimeout(() => {
-    isCalculatingFilters.value = false;
-  }, 500);
-}, { deep: true });
-
-// Optimized: Memoized filtered results
-const cachedFilteredTokens = computed(() => {
   const tokens = allTokens.value;
+  
+  // Early return if no tokens loaded yet
+  if (!tokens || tokens.length === 0) {
+    return [];
+  }
   
   // Early return if no filters applied
   const hasFilters = filters.character.length > 0 ||
@@ -634,11 +675,14 @@ const cachedFilteredTokens = computed(() => {
 
 // Total count of filtered tokens (before virtual pagination)
 const totalFilteredCount = computed(() => {
+  if (import.meta.server) return 0;
   return cachedFilteredTokens.value.length;
 });
 
 // Filtered tokens with virtual pagination
 const filteredTokens = computed(() => {
+  if (import.meta.server) return [];
+  
   // Always use virtual pagination for smooth performance
   // Display only the amount specified by displayCount
   return cachedFilteredTokens.value.slice(0, displayCount.value);
@@ -720,6 +764,9 @@ function handleFiltersUpdate(newFilters: typeof filters) {
 const initialZoomSet = ref(false);
 
 onMounted(() => {
+  console.log('✓ Page mounted and interactive');
+  console.time('Data Load Time');
+  
   window.addEventListener("scroll", handleScroll);
   checkContentHeight();
 
