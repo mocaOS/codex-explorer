@@ -1,0 +1,52 @@
+{
+  "name": "decc0s-codex",
+  "private": true,
+  "type": "module",
+  "version": "1.0.0",
+  "description": "The Codex - Art DeCC0s Explorer",
+  "scripts": {
+    "build": "nuxt build",
+    "dev": "npm run fix:unenv && nuxt dev --port 3001",
+    "generate": "nuxt generate",
+    "preview": "nuxt preview",
+    "postinstall": "nuxt prepare && npm run fix:unenv",
+    "fix:unenv": "node -e \"const fs=require('fs');const path=require('path');const src='node_modules/unenv/dist/runtime/mock';const dest='node_modules/unenv/dist/runtime/runtime';if(fs.existsSync(src)&&!fs.existsSync(dest+'/mock')){fs.mkdirSync(dest,{recursive:true});fs.cpSync(src,dest+'/mock',{recursive:true})}\""
+  },
+  "dependencies": {
+    "@davestewart/nuxt-scrollbar": "^1.0.0",
+    "@nuxt/icon": "1.10.3",
+    "@nuxt/image": "^1.9.0",
+    "@nuxtjs/color-mode": "^3.5.2",
+    "@nuxtjs/google-fonts": "3.2.0",
+    "@nuxtjs/seo": "^2.1.1",
+    "@radix-icons/vue": "^1.0.0",
+    "@tanstack/vue-query": "^5.66.0",
+    "@vueuse/core": "^12.5.0",
+    "@vueuse/nuxt": "12.5.0",
+    "axios": "^1.7.9",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "js-base64": "^3.7.7",
+    "lodash": "^4.17.21",
+    "lucide-vue-next": "^0.474.0",
+    "nuxt": "^3.15.4",
+    "nuxt-swiper": "^1.2.2",
+    "radix-vue": "^1.9.13",
+    "sass-embedded": "^1.83.4",
+    "shadcn-nuxt": "^0.11.3",
+    "sharp": "0.33.5",
+    "tailwind-merge": "^2.6.0",
+    "tailwindcss-animate": "^1.0.7",
+    "ufo": "^1.5.4",
+    "vue": "^3.5.13",
+    "vue-router": "^4.5.0"
+  },
+  "devDependencies": {
+    "@nuxtjs/tailwindcss": "^6.13.1",
+    "@types/lodash": "^4.17.15",
+    "typescript": "^5.7.3"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}
