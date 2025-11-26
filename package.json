@@ -6,7 +6,7 @@
   "description": "The Codex - Art DeCC0s Explorer",
   "scripts": {
     "build": "nuxt build",
-    "dev": "npm run fix:unenv && nuxt dev --port 3001",
+    "dev": "npm run fix:unenv && nuxt dev",
     "generate": "nuxt generate",
     "preview": "nuxt preview",
     "postinstall": "nuxt prepare && npm run fix:unenv",
