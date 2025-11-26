@@ -1,5 +1,17 @@
 <template>
   <div class="w-full border-white/10 p-4">
+    <!-- Total Results Counter -->
+    <div class="mb-6 rounded-md border border-white/20 bg-neutral-800/50 p-3 text-center">
+      <div class="text-xs uppercase tracking-wide text-white/50">DeCC0s</div>
+      <div 
+        class="mt-1 text-2xl font-bold tabular-nums transition-colors duration-200"
+        :class="countTextColor"
+      >
+        {{ displayedCount.toLocaleString() }}
+      </div>
+      <div class="mt-1 text-xs text-white/40">of 10k total</div>
+    </div>
+
     <!-- Combined Search by Token ID or Name -->
     <div class="mb-6">
       <label class="mb-2 block text-sm font-medium">Find any Art DeCC0</label>
@@ -16,147 +28,227 @@
 
 
       <div>
-        <h3 class="mb-2 text-sm font-medium">Character</h3>
-        <select
-          v-model="localFilters.character"
-          class="w-full rounded-md border border-white/10 bg-neutral-900 p-2"
-          @change="handleFilterChange"
-        >
-          <option value="">All</option>
-          <option
+        <h3 class="mb-2 text-sm font-medium">
+          Character
+          <span v-if="localFilters.character.length > 0" class="ml-1 text-xs text-white/50">
+            ({{ localFilters.character.length }} selected)
+          </span>
+        </h3>
+        <div class="max-h-48 overflow-y-auto rounded-md border border-white/10 bg-neutral-900 p-2">
+          <label
             v-for="character in sortedCharacters"
             :key="character"
-            :value="character"
+            class="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 hover:bg-white/5"
           >
-            {{ character }} ({{ traitCounts.characters[character] || 0 }})
-          </option>
-        </select>
+            <input
+              type="checkbox"
+              :value="character"
+              :checked="localFilters.character.includes(character)"
+              @change="toggleFilter('character', character)"
+              class="h-4 w-4 rounded border-white/30 bg-neutral-800 text-white accent-white focus:ring-2 focus:ring-white/50 focus:ring-offset-0"
+            />
+            <span class="flex-1 text-sm">
+              {{ character }}
+              <span class="text-xs text-white/40">({{ traitCounts.characters[character] || 0 }})</span>
+            </span>
+          </label>
+        </div>
       </div>
 
       <div>
-        <h3 class="mb-2 text-sm font-medium">DNA Lineage</h3>
-        <select
-          v-model="localFilters.dnaLineage"
-          class="w-full rounded-md border border-white/10 bg-neutral-900 p-2"
-          @change="handleFilterChange"
-        >
-          <option value="">All</option>
-          <option
+        <h3 class="mb-2 text-sm font-medium">
+          DNA Lineage
+          <span v-if="localFilters.dnaLineage.length > 0" class="ml-1 text-xs text-white/50">
+            ({{ localFilters.dnaLineage.length }} selected)
+          </span>
+        </h3>
+        <div class="max-h-48 overflow-y-auto rounded-md border border-white/10 bg-neutral-900 p-2">
+          <label
             v-for="lineage in sortedDnaLineages"
             :key="lineage"
-            :value="lineage"
+            class="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 hover:bg-white/5"
           >
-            {{ lineage }} ({{ traitCounts.dnaLineages[lineage] || 0 }})
-          </option>
-        </select>
+            <input
+              type="checkbox"
+              :value="lineage"
+              :checked="localFilters.dnaLineage.includes(lineage)"
+              @change="toggleFilter('dnaLineage', lineage)"
+              class="h-4 w-4 rounded border-white/30 bg-neutral-800 text-white accent-white focus:ring-2 focus:ring-white/50 focus:ring-offset-0"
+            />
+            <span class="flex-1 text-sm">
+              {{ lineage }}
+              <span class="text-xs text-white/40">({{ traitCounts.dnaLineages[lineage] || 0 }})</span>
+            </span>
+          </label>
+        </div>
       </div>
 
       <div>
-        <h3 class="mb-2 text-sm font-medium">DNA Memetic</h3>
-        <select
-          v-model="localFilters.dnaMemetic"
-          class="w-full rounded-md border border-white/10 bg-neutral-900 p-2"
-          @change="handleFilterChange"
-        >
-          <option value="">All</option>
-          <option
+        <h3 class="mb-2 text-sm font-medium">
+          DNA Memetic
+          <span v-if="localFilters.dnaMemetic.length > 0" class="ml-1 text-xs text-white/50">
+            ({{ localFilters.dnaMemetic.length }} selected)
+          </span>
+        </h3>
+        <div class="max-h-48 overflow-y-auto rounded-md border border-white/10 bg-neutral-900 p-2">
+          <label
             v-for="memetic in sortedDnaMemetics"
             :key="memetic"
-            :value="memetic"
+            class="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 hover:bg-white/5"
           >
-            {{ memetic }} ({{ traitCounts.dnaMemetics[memetic] || 0 }})
-          </option>
-        </select>
+            <input
+              type="checkbox"
+              :value="memetic"
+              :checked="localFilters.dnaMemetic.includes(memetic)"
+              @change="toggleFilter('dnaMemetic', memetic)"
+              class="h-4 w-4 rounded border-white/30 bg-neutral-800 text-white accent-white focus:ring-2 focus:ring-white/50 focus:ring-offset-0"
+            />
+            <span class="flex-1 text-sm">
+              {{ memetic }}
+              <span class="text-xs text-white/40">({{ traitCounts.dnaMemetics[memetic] || 0 }})</span>
+            </span>
+          </label>
+        </div>
       </div>
 
       <div>
-        <h3 class="mb-2 text-sm font-medium">DNA Artist Self-Portrait</h3>
-        <select
-          v-model="localFilters.dnaArtistSelfPortrait"
-          class="w-full rounded-md border border-white/10 bg-neutral-900 p-2"
-          @change="handleFilterChange"
-        >
-          <option value="">All</option>
-          <option
+        <h3 class="mb-2 text-sm font-medium">
+          DNA Artist Self-Portrait
+          <span v-if="localFilters.dnaArtistSelfPortrait.length > 0" class="ml-1 text-xs text-white/50">
+            ({{ localFilters.dnaArtistSelfPortrait.length }} selected)
+          </span>
+        </h3>
+        <div class="max-h-48 overflow-y-auto rounded-md border border-white/10 bg-neutral-900 p-2">
+          <label
             v-for="portrait in sortedDnaArtistSelfPortraits"
             :key="portrait"
-            :value="portrait"
+            class="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 hover:bg-white/5"
           >
-            {{ portrait }} ({{ traitCounts.dnaArtistSelfPortraits[portrait] || 0 }})
-          </option>
-        </select>
+            <input
+              type="checkbox"
+              :value="portrait"
+              :checked="localFilters.dnaArtistSelfPortrait.includes(portrait)"
+              @change="toggleFilter('dnaArtistSelfPortrait', portrait)"
+              class="h-4 w-4 rounded border-white/30 bg-neutral-800 text-white accent-white focus:ring-2 focus:ring-white/50 focus:ring-offset-0"
+            />
+            <span class="flex-1 text-sm">
+              {{ portrait }}
+              <span class="text-xs text-white/40">({{ traitCounts.dnaArtistSelfPortraits[portrait] || 0 }})</span>
+            </span>
+          </label>
+        </div>
       </div>
 
       <div>
-        <h3 class="mb-2 text-sm font-medium">DNA MOCA Collection</h3>
-        <select
-          v-model="localFilters.dnaMOCACollection"
-          class="w-full rounded-md border border-white/10 bg-neutral-900 p-2"
-          @change="handleFilterChange"
-        >
-          <option value="">All</option>
-          <option
+        <h3 class="mb-2 text-sm font-medium">
+          DNA MOCA Collection
+          <span v-if="localFilters.dnaMOCACollection.length > 0" class="ml-1 text-xs text-white/50">
+            ({{ localFilters.dnaMOCACollection.length }} selected)
+          </span>
+        </h3>
+        <div class="max-h-48 overflow-y-auto rounded-md border border-white/10 bg-neutral-900 p-2">
+          <label
             v-for="collection in sortedDnaMOCACollections"
             :key="collection"
-            :value="collection"
+            class="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 hover:bg-white/5"
           >
-            {{ collection }} ({{ traitCounts.dnaMOCACollections[collection] || 0 }})
-          </option>
-        </select>
+            <input
+              type="checkbox"
+              :value="collection"
+              :checked="localFilters.dnaMOCACollection.includes(collection)"
+              @change="toggleFilter('dnaMOCACollection', collection)"
+              class="h-4 w-4 rounded border-white/30 bg-neutral-800 text-white accent-white focus:ring-2 focus:ring-white/50 focus:ring-offset-0"
+            />
+            <span class="flex-1 text-sm">
+              {{ collection }}
+              <span class="text-xs text-white/40">({{ traitCounts.dnaMOCACollections[collection] || 0 }})</span>
+            </span>
+          </label>
+        </div>
       </div>
 
       <div>
-        <h3 class="mb-2 text-sm font-medium">Background</h3>
-        <select
-          v-model="localFilters.background"
-          class="w-full rounded-md border border-white/10 bg-neutral-900 p-2"
-          @change="handleFilterChange"
-        >
-          <option value="">All</option>
-          <option
+        <h3 class="mb-2 text-sm font-medium">
+          Background
+          <span v-if="localFilters.background.length > 0" class="ml-1 text-xs text-white/50">
+            ({{ localFilters.background.length }} selected)
+          </span>
+        </h3>
+        <div class="max-h-48 overflow-y-auto rounded-md border border-white/10 bg-neutral-900 p-2">
+          <label
             v-for="background in sortedBackgrounds"
             :key="background"
-            :value="background"
+            class="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 hover:bg-white/5"
           >
-            {{ background }} ({{ traitCounts.backgrounds[background] || 0 }})
-          </option>
-        </select>
+            <input
+              type="checkbox"
+              :value="background"
+              :checked="localFilters.background.includes(background)"
+              @change="toggleFilter('background', background)"
+              class="h-4 w-4 rounded border-white/30 bg-neutral-800 text-white accent-white focus:ring-2 focus:ring-white/50 focus:ring-offset-0"
+            />
+            <span class="flex-1 text-sm">
+              {{ background }}
+              <span class="text-xs text-white/40">({{ traitCounts.backgrounds[background] || 0 }})</span>
+            </span>
+          </label>
+        </div>
       </div>
 
       <div>
-        <h3 class="mb-2 text-sm font-medium">Background Texture</h3>
-        <select
-          v-model="localFilters.backgroundTexture"
-          class="w-full rounded-md border border-white/10 bg-neutral-900 p-2"
-          @change="handleFilterChange"
-        >
-          <option value="">All</option>
-          <option
+        <h3 class="mb-2 text-sm font-medium">
+          Background Texture
+          <span v-if="localFilters.backgroundTexture.length > 0" class="ml-1 text-xs text-white/50">
+            ({{ localFilters.backgroundTexture.length }} selected)
+          </span>
+        </h3>
+        <div class="max-h-48 overflow-y-auto rounded-md border border-white/10 bg-neutral-900 p-2">
+          <label
             v-for="texture in sortedBackgroundTextures"
             :key="texture"
-            :value="texture"
+            class="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 hover:bg-white/5"
           >
-            {{ texture }} ({{ traitCounts.backgroundTextures[texture] || 0 }})
-          </option>
-        </select>
+            <input
+              type="checkbox"
+              :value="texture"
+              :checked="localFilters.backgroundTexture.includes(texture)"
+              @change="toggleFilter('backgroundTexture', texture)"
+              class="h-4 w-4 rounded border-white/30 bg-neutral-800 text-white accent-white focus:ring-2 focus:ring-white/50 focus:ring-offset-0"
+            />
+            <span class="flex-1 text-sm">
+              {{ texture }}
+              <span class="text-xs text-white/40">({{ traitCounts.backgroundTextures[texture] || 0 }})</span>
+            </span>
+          </label>
+        </div>
       </div>
 
       <div>
-        <h3 class="mb-2 text-sm font-medium">Mood</h3>
-        <select
-          v-model="localFilters.mood"
-          class="w-full rounded-md border border-white/10 bg-neutral-900 p-2"
-          @change="handleFilterChange"
-        >
-          <option value="">All</option>
-          <option
+        <h3 class="mb-2 text-sm font-medium">
+          Mood
+          <span v-if="localFilters.mood.length > 0" class="ml-1 text-xs text-white/50">
+            ({{ localFilters.mood.length }} selected)
+          </span>
+        </h3>
+        <div class="max-h-48 overflow-y-auto rounded-md border border-white/10 bg-neutral-900 p-2">
+          <label
             v-for="mood in sortedMoods"
             :key="mood"
-            :value="mood"
+            class="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 hover:bg-white/5"
           >
-            {{ mood }} ({{ traitCounts.moods[mood] || 0 }})
-          </option>
-        </select>
+            <input
+              type="checkbox"
+              :value="mood"
+              :checked="localFilters.mood.includes(mood)"
+              @change="toggleFilter('mood', mood)"
+              class="h-4 w-4 rounded border-white/30 bg-neutral-800 text-white accent-white focus:ring-2 focus:ring-white/50 focus:ring-offset-0"
+            />
+            <span class="flex-1 text-sm">
+              {{ mood }}
+              <span class="text-xs text-white/40">({{ traitCounts.moods[mood] || 0 }})</span>
+            </span>
+          </label>
+        </div>
       </div>
 
     </div>
@@ -171,21 +263,21 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, watch, onMounted, computed } from 'vue';
+import { ref, reactive, watch, onMounted, onUnmounted, computed } from 'vue';
 import traitCountsData from '~/assets/data/trait-counts.json';
 // Button and Input are auto-imported by Nuxt
 
 // Define the filter interface
 interface Filters {
   search: string;
-  background: string;
-  backgroundTexture: string;
-  character: string;
-  mood: string;
-  dnaLineage: string;
-  dnaMemetic: string;
-  dnaArtistSelfPortrait: string;
-  dnaMOCACollection: string;
+  background: string[];
+  backgroundTexture: string[];
+  character: string[];
+  mood: string[];
+  dnaLineage: string[];
+  dnaMemetic: string[];
+  dnaArtistSelfPortrait: string[];
+  dnaMOCACollection: string[];
 }
 
 // Define the unique traits interface
@@ -219,6 +311,8 @@ const traitCounts = traitCountsData as TraitCounts;
 const props = defineProps<{
   filters: Filters;
   uniqueTraits: UniqueTraits;
+  totalResults: number;
+  isCalculating: boolean;
 }>();
 
 // Emits
@@ -294,28 +388,123 @@ const sortedDnaMOCACollections = computed(() => {
 // Local filters state
 const localFilters = reactive({ ...props.filters });
 
+// Animated counter display
+const displayedCount = ref(props.totalResults);
+const isAnimating = ref(false);
+let animationInterval: NodeJS.Timeout | null = null;
+let animationDelayTimeout: NodeJS.Timeout | null = null;
+
+// Computed color class based on state
+const countTextColor = computed(() => {
+  // If calculating or animating, show dark grey
+  if (props.isCalculating || isAnimating.value) {
+    return 'text-white/30';
+  }
+  // If result is 0, keep dark grey
+  if (props.totalResults === 0) {
+    return 'text-white/30';
+  }
+  // Otherwise show white
+  return 'text-white';
+});
+
 // Watch for changes in props and update local state
 watch(() => props.filters, (newFilters) => {
   Object.assign(localFilters, newFilters);
 }, { deep: true });
+
+// Watch isCalculating to trigger animation with delay
+watch(() => props.isCalculating, (calculating) => {
+  if (calculating) {
+    // Clear any existing timeouts/intervals
+    if (animationDelayTimeout) {
+      clearTimeout(animationDelayTimeout);
+      animationDelayTimeout = null;
+    }
+    if (animationInterval) {
+      clearInterval(animationInterval);
+      animationInterval = null;
+    }
+    
+    // Color turns dark grey immediately (handled by computed)
+    // Wait 300ms before starting animation
+    animationDelayTimeout = setTimeout(() => {
+      // Only start animation if still calculating
+      if (props.isCalculating) {
+        isAnimating.value = true;
+        animationInterval = setInterval(() => {
+          displayedCount.value = Math.floor(Math.random() * (9999 - 1111 + 1)) + 1111;
+        }, 50); // Update every 50ms for smooth animation
+      }
+    }, 300);
+  } else {
+    // Stop animation and show real count
+    isAnimating.value = false;
+    
+    if (animationDelayTimeout) {
+      clearTimeout(animationDelayTimeout);
+      animationDelayTimeout = null;
+    }
+    
+    if (animationInterval) {
+      clearInterval(animationInterval);
+      animationInterval = null;
+    }
+    
+    displayedCount.value = props.totalResults;
+  }
+}, { immediate: true });
+
+// Watch totalResults when not calculating
+watch(() => props.totalResults, (newCount) => {
+  if (!props.isCalculating && !isAnimating.value) {
+    displayedCount.value = newCount;
+  }
+});
+
+// Cleanup animation on unmount
+onUnmounted(() => {
+  if (animationInterval) {
+    clearInterval(animationInterval);
+  }
+  if (animationDelayTimeout) {
+    clearTimeout(animationDelayTimeout);
+  }
+});
 
 // Handle filter changes
 const handleFilterChange = () => {
   emit('update:filters', { ...localFilters });
 };
 
+// Toggle filter checkbox
+const toggleFilter = (filterKey: keyof Omit<Filters, 'search'>, value: string) => {
+  const filterArray = localFilters[filterKey] as string[];
+  const index = filterArray.indexOf(value);
+  
+  if (index > -1) {
+    // Remove if already selected
+    filterArray.splice(index, 1);
+  } else {
+    // Add if not selected
+    filterArray.push(value);
+  }
+  
+  handleFilterChange();
+};
+
 // Reset filters
 const resetFilters = () => {
   Object.assign(localFilters, {
     search: '',
-    background: '',
-    backgroundTexture: '',
-    character: '',
-    mood: '',
-    dnaLineage: '',
-    dnaMemetic: '',
-    dnaArtistSelfPortrait: '',
-    dnaMOCACollection: ''
+    background: [],
+    backgroundTexture: [],
+    character: [],
+    mood: [],
+    dnaLineage: [],
+    dnaMemetic: [],
+    dnaArtistSelfPortrait: [],
+    dnaMOCACollection: []
   });
   emit('update:filters', { ...localFilters });
 };

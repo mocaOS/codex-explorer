@@ -73,17 +73,24 @@ The Museum of Crypto Art isn't just archiving the past—it's **seeding the futu
 
 ### 🔍 Advanced Search & Filtering
 - **Smart search bar** - searches by Token ID (exact match) or Character Name (partial match)
+- **Multi-select checkboxes** with occurrence counts displayed
 - **Real-time trait filtering** across 8 categories:
-  - Character Type (5 types)
-  - Background Style (18 art movements)
+  - Character Type (7 types including ultra-rare Alien & Ape)
+  - Background Style (16 art movements)
   - Background Texture (7 textures)
   - Mood (3 emotional states)
   - DNA Lineage (17 historical collectors)
   - DNA Memetic (17 crypto culture references)
   - DNA Artist Self-Portrait (20 famous artists)
   - DNA MOCA Collection (71 artists from MOCA Genesis)
+- **Smart OR/AND Logic**:
+  - **Within a category** (OR): Selecting multiple options shows tokens matching ANY selection
+    - Example: Character "Alien + Ape" = 33 results (9 + 24)
+  - **Between categories** (AND): Must match selections from all active categories
+    - Example: Character "Alien" AND Background "Surrealism" = only Alien DeCC0s with Surrealism backgrounds
 - **Client-side filtering** for instant results (no loading delays)
-- **Combinable filters** - mix and match any traits for precise discovery
+- **Rarity-sorted options** - rarest traits appear first in each dropdown
+- **Live result counter** - shows exact match count with animated loading state
 
 ### 📖 Rich Character Profiles
 Each Art DeCC0 includes extensive metadata:
@@ -321,18 +328,31 @@ In the MOCA Codex API, tokens have two relevant fields:
 Because Aliens and Apes are **character types** (not background art movements) and incredibly rare, we made the UX decision to:
 1. Display them in the **Character filter** dropdown (not Background)
 2. Sort all filters by rarity, putting them at the top where collectors can find them easily
+3. Allow multi-select with **OR logic** - selecting "Alien + Ape + XCOPY DeCC0" shows all 53 tokens (9 + 24 + 20)
+
+#### Multi-Select OR Logic Behavior
+The Character filter uses **OR logic** within the category:
+- **Selecting one**: Shows only that character type
+- **Selecting multiple**: Shows tokens matching **ANY** of the selected types (additive)
+- **Example**: Alien (9) + Ape (24) = 33 total results
+- **Example**: Alien (9) + Ape (24) + XCOPY DeCC0 (20) = 53 total results
+
+This applies to ALL filter categories. Selections within the same category use OR logic, while filters across different categories use AND logic.
 
 #### How It Works
 Special handling code exists in **two places**:
 
-**1. Frontend Filtering** (`pages/index.vue`, lines ~581-589):
+**1. Frontend Filtering** (`pages/index.vue`, lines ~597-611):
 ```javascript
-if (filters.character) {
-  // Special case: Alien and Ape are stored in background_category field
-  if (filters.character === 'Alien' || filters.character === 'Ape') {
-    results = results.filter(token => token.background_category === filters.character);
-  } else {
-    results = results.filter(token => token.decc0_type === filters.character);
+if (characterSet) {
+  // Check if token matches ANY of the selected characters (OR logic)
+  const matchesAlien = characterSet.has('Alien') && token.background_category === 'Alien';
+  const matchesApe = characterSet.has('Ape') && token.background_category === 'Ape';
+  const matchesNormalChar = characterSet.has(token.decc0_type);
+  
+  // Token must match at least one selected character
+  if (!matchesAlien && !matchesApe && !matchesNormalChar) {
+    return false;
   }
 }
 ```
@@ -374,21 +394,22 @@ If you fork this project and want standard filtering that matches the raw API fi
 }
 ```
 
-**Step 2:** Remove special case from `pages/index.vue` (~line 581):
+**Step 2:** Remove special case from `pages/index.vue` (~line 597):
 ```javascript
-// Replace this:
-if (filters.character) {
-  if (filters.character === 'Alien' || filters.character === 'Ape') {
-    results = results.filter(token => token.background_category === filters.character);
-  } else {
-    results = results.filter(token => token.decc0_type === filters.character);
+// Replace the character filter block:
+if (characterSet) {
+  // Check if token matches ANY of the selected characters (OR logic)
+  const matchesAlien = characterSet.has('Alien') && token.background_category === 'Alien';
+  const matchesApe = characterSet.has('Ape') && token.background_category === 'Ape';
+  const matchesNormalChar = characterSet.has(token.decc0_type);
+  
+  if (!matchesAlien && !matchesApe && !matchesNormalChar) {
+    return false;
   }
 }
 
-// With standard filtering:
-if (filters.character) {
-  results = results.filter(token => token.decc0_type === filters.character);
-}
+// With standard filtering (no Alien/Ape special case):
+if (characterSet && !characterSet.has(token.decc0_type)) return false;
 ```
 
 **Step 3:** Remove special case from `scripts/generate-trait-counts.py` (~line 74):

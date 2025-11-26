@@ -166,8 +166,8 @@
         class="shrink-0 border-white/10 p-4 transition-all duration-300 ease-in-out"
         :class="{
           // Width classes
-          'w-64': !isMuseumMode,
-          'w-80': isMuseumMode && showFiltersInMuseum,
+          'w-80': !isMuseumMode,
+          'w-96': isMuseumMode && showFiltersInMuseum,
           // Museum mode styles - higher z-index to be above overlay, wider sidebar
           'fixed inset-y-0 left-0 z-40 overflow-y-auto bg-black/95 backdrop-blur-sm border-r border-white/20 shadow-2xl': isMuseumMode && showFiltersInMuseum,
           // Normal mode mobile styles - show when mobile menu is open
@@ -216,6 +216,8 @@
           @update:filters="handleFiltersUpdate"
           :filters="filters"
           :unique-traits="uniqueTraits"
+          :total-results="totalFilteredCount"
+          :is-calculating="isCalculatingFilters"
         />
       </div>
 
@@ -223,7 +225,7 @@
         class="flex-1 transition-all duration-300"
         :class="{
           'w-full': isMuseumMode && !showFiltersInMuseum,
-          'w-full pl-80': isMuseumMode && showFiltersInMuseum,
+          'w-full pl-96': isMuseumMode && showFiltersInMuseum,
           'md:pl-8': !isMuseumMode && showFiltersInNormal,
           'md:pl-0': !isMuseumMode && !showFiltersInNormal,
         }"
@@ -296,14 +298,14 @@ function closeMobileMenu() {
 
 const filters = reactive({
   search: "",
-  background: "",
-  backgroundTexture: "",
-  character: "",
-  mood: "",
-  dnaLineage: "",
-  dnaMemetic: "",
-  dnaArtistSelfPortrait: "",
-  dnaMOCACollection: "",
+  background: [] as string[],
+  backgroundTexture: [] as string[],
+  character: [] as string[],
+  mood: [] as string[],
+  dnaLineage: [] as string[],
+  dnaMemetic: [] as string[],
+  dnaArtistSelfPortrait: [] as string[],
+  dnaMOCACollection: [] as string[],
   sortOrder: "asc" as "asc" | "desc" | "random",
 });
 
@@ -319,10 +321,8 @@ const uniqueTraits = reactive({
 });
 
 const page = ref(1);
-const searchDebounceTimer = ref<NodeJS.Timeout | null>(null);
 const scrollThrottleTimer = ref<NodeJS.Timeout | null>(null);
-
-const filtersRef = ref({ ...filters });
+const isCalculatingFilters = ref(false);
 
 // Zoom level state (0% = smallest, 100% = largest)
 // Starting at 85% on mobile (fewer columns), 55% on desktop (5 columns per row)
@@ -474,12 +474,11 @@ interface CodexToken {
 }
 
 const { data: tokens, isLoading: isLoadingTokens, fetchNextPage, isFetchingNextPage, suspense: suspenseTokens, refetch } = useInfiniteQuery<CodexToken[]>({
-  queryKey: [ "tokens", filtersRef.value ],
+  queryKey: [ "tokens" ], // Static key - fetch once, filter client-side
   queryFn: async ({ pageParam = 0 }) => {
     // Fetch ALL records upfront for better UX
     // This enables instant infinite scrolling without API delays
-    const isTextSearch = filtersRef.value.search && !/^\d+$/.test(filtersRef.value.search.trim());
-
+    
     // Only fetch on first page load (pageParam = 0)
     if (pageParam !== 0) {
       return []; // No more API calls after initial load
@@ -488,57 +487,19 @@ const { data: tokens, isLoading: isLoadingTokens, fetchNextPage, isFetchingNextP
     const limit = 10000; // Always fetch all items
     const offset = 0;
 
-    // Build filter object for Directus
-    const filterObj: any = {};
-
-    // Only filter by ID on server-side (for exact ID searches)
-    if (filtersRef.value.search) {
-      const searchValue = filtersRef.value.search.trim();
-
-      // If it's a number, search by exact ID on server-side
-      if (/^\d+$/.test(searchValue)) {
-        filterObj.id = { _eq: parseInt(searchValue) };
-      }
-    }
-
-    // All other filters (traits, name search) are applied client-side
-    // This allows us to fetch all data once and filter instantly
-
-    // Build query params
+    // Build query params - fetch ALL tokens, no filters
     const params: any = {
       limit,
       offset,
       fields: 'id,name,description,thumbnail.*,thumbnail_character.*,thumbnail_background.*,background_category,background_texture,mood,decc0_type,dna1,dna2,dna3,dna4,ipfs_final,ipfs_character,ipfs_background',
+      sort: 'id', // Simple ascending sort by default
     };
-
-    // Add filter if we have any (only ID filter)
-    if (Object.keys(filterObj).length > 0) {
-      params.filter = JSON.stringify(filterObj);
-    }
-
-    // Sort order
-    if (filtersRef.value.sortOrder === "asc") {
-      params.sort = 'id';
-    } else if (filtersRef.value.sortOrder === "desc") {
-      params.sort = '-id';
-    } else if (filtersRef.value.sortOrder === "random") {
-      // For random, use normal ID sort and shuffle client-side
-      // We'll use a random starting point for each batch
-      params.sort = 'id';
-    }
 
     const { data } = await axios.get('https://api.decc0s.com/items/codex', { params });
 
-    let items = data.data as CodexToken[];
+    const items = data.data as CodexToken[];
 
-    // For random sort, shuffle the results client-side for additional randomness
-    if (filtersRef.value.sortOrder === 'random' && items.length > 0) {
-      // Fisher-Yates shuffle algorithm
-      for (let i = items.length - 1; i > 0; i--) {
-        const j = Math.floor(Math.random() * (i + 1));
-        [items[i], items[j]] = [items[j], items[i]];
-      }
-    }
+    console.log(`✓ Loaded ${items.length} Art DeCC0s - all filtering happens client-side`);
 
     return items;
   },
@@ -547,6 +508,8 @@ const { data: tokens, isLoading: isLoadingTokens, fetchNextPage, isFetchingNextP
     // We fetch all items at once, so no more pages needed
     return undefined;
   },
+  staleTime: Infinity, // Data never goes stale - it's the full collection
+  gcTime: Infinity, // Keep in cache forever during session
 });
 
 uniqueTraits.backgrounds = uniqueTraitsData.backgrounds;
@@ -574,62 +537,111 @@ const allTokens = computed(() => {
   return allItems;
 });
 
-const filteredTokens = computed(() => {
-  let results = [ ...allTokens.value ];
+// Helper function to apply all filters (optimized with Sets for O(1) lookups)
+const applyFilters = (tokens: CodexToken[], filterState = filters) => {
+  // Convert filter arrays to Sets for O(1) lookup performance
+  const characterSet = filterState.character.length > 0 ? new Set(filterState.character) : null;
+  const moodSet = filterState.mood.length > 0 ? new Set(filterState.mood) : null;
+  const backgroundSet = filterState.background.length > 0 ? new Set(filterState.background) : null;
+  const textureSet = filterState.backgroundTexture.length > 0 ? new Set(filterState.backgroundTexture) : null;
+  const lineageSet = filterState.dnaLineage.length > 0 ? new Set(filterState.dnaLineage) : null;
+  const memeticSet = filterState.dnaMemetic.length > 0 ? new Set(filterState.dnaMemetic) : null;
+  const portraitSet = filterState.dnaArtistSelfPortrait.length > 0 ? new Set(filterState.dnaArtistSelfPortrait) : null;
+  const collectionSet = filterState.dnaMOCACollection.length > 0 ? new Set(filterState.dnaMOCACollection) : null;
+  
+  // Prepare search term once if needed
+  const searchLower = (filterState.search && !/^\d+$/.test(filterState.search.trim()))
+    ? filterState.search.trim().toLowerCase()
+    : null;
 
-  // Apply trait filters client-side
-  if (filters.character) {
-    // Special case: Alien and Ape are stored in background_category field
-    // but we show them in the character dropdown because they're rare and special
-    if (filters.character === 'Alien' || filters.character === 'Ape') {
-      results = results.filter(token => token.background_category === filters.character);
-    } else {
-      results = results.filter(token => token.decc0_type === filters.character);
-    }
-  }
-  if (filters.mood) {
-    results = results.filter(token => token.mood === filters.mood);
-  }
-  if (filters.background) {
-    results = results.filter(token => token.background_category === filters.background);
-  }
-  if (filters.backgroundTexture) {
-    results = results.filter(token => token.background_texture === filters.backgroundTexture);
-  }
-  if (filters.dnaLineage) {
-    results = results.filter(token => token.dna1 === filters.dnaLineage);
-  }
-  if (filters.dnaMemetic) {
-    results = results.filter(token => token.dna2 === filters.dnaMemetic);
-  }
-  if (filters.dnaArtistSelfPortrait) {
-    results = results.filter(token => token.dna3 === filters.dnaArtistSelfPortrait);
-  }
-  if (filters.dnaMOCACollection) {
-    results = results.filter(token => token.dna4 === filters.dnaMOCACollection);
-  }
-
-  // If there's a text search (not a number), filter client-side to only show name matches
-  if (filters.search && !/^\d+$/.test(filters.search.trim())) {
-    const searchLower = filters.search.trim().toLowerCase();
-    results = results.filter(token => {
-      // Check if name contains the search term
-      if (token.name) {
-        // Handle both array and string formats
-        const names = Array.isArray(token.name) ? token.name : [token.name];
-        return names.some(name =>
-          name && name.toLowerCase().includes(searchLower)
-        );
+  // Single pass filter for maximum performance
+  return tokens.filter(token => {
+    // Character filter (with Alien/Ape special case) - OR logic
+    if (characterSet) {
+      // Check if token matches ANY of the selected characters
+      const matchesAlien = characterSet.has('Alien') && token.background_category === 'Alien';
+      const matchesApe = characterSet.has('Ape') && token.background_category === 'Ape';
+      const matchesNormalChar = characterSet.has(token.decc0_type);
+      
+      // Token must match at least one selected character
+      if (!matchesAlien && !matchesApe && !matchesNormalChar) {
+        return false;
       }
-      return false;
-    });
-  }
+    }
+    
+    // All other filters with early returns for performance
+    if (moodSet && !moodSet.has(token.mood)) return false;
+    if (backgroundSet && !backgroundSet.has(token.background_category)) return false;
+    if (textureSet && !textureSet.has(token.background_texture)) return false;
+    if (lineageSet && !lineageSet.has(token.dna1)) return false;
+    if (memeticSet && !memeticSet.has(token.dna2)) return false;
+    if (portraitSet && !portraitSet.has(token.dna3)) return false;
+    if (collectionSet && !collectionSet.has(token.dna4)) return false;
+    
+    // Name search filter
+    if (searchLower && token.name) {
+      const names = Array.isArray(token.name) ? token.name : [token.name];
+      if (!names.some(name => name && name.toLowerCase().includes(searchLower))) {
+        return false;
+      }
+    }
+    
+    return true;
+  });
+};
 
+// Watch filters to show calculating state with smart timing
+let calculatingTimeout: NodeJS.Timeout | null = null;
+watch(() => ({ ...filters }), async () => {
+  isCalculatingFilters.value = true;
+  
+  // Clear any existing timeout
+  if (calculatingTimeout) {
+    clearTimeout(calculatingTimeout);
+  }
+  
+  // Wait for next tick to let computed run
+  await nextTick();
+  
+  // Timeline: 0ms = click, 300ms = animation starts (if needed), 500ms = done
+  // This ensures animation has time to run if filtering takes long
+  calculatingTimeout = setTimeout(() => {
+    isCalculatingFilters.value = false;
+  }, 500);
+}, { deep: true });
+
+// Optimized: Memoized filtered results
+const cachedFilteredTokens = computed(() => {
+  const tokens = allTokens.value;
+  
+  // Early return if no filters applied
+  const hasFilters = filters.character.length > 0 ||
+    filters.mood.length > 0 ||
+    filters.background.length > 0 ||
+    filters.backgroundTexture.length > 0 ||
+    filters.dnaLineage.length > 0 ||
+    filters.dnaMemetic.length > 0 ||
+    filters.dnaArtistSelfPortrait.length > 0 ||
+    filters.dnaMOCACollection.length > 0 ||
+    (filters.search && !/^\d+$/.test(filters.search.trim()));
+  
+  if (!hasFilters) {
+    return tokens; // Return all tokens if no filters
+  }
+  
+  return applyFilters(tokens, filters);
+});
+
+// Total count of filtered tokens (before virtual pagination)
+const totalFilteredCount = computed(() => {
+  return cachedFilteredTokens.value.length;
+});
+
+// Filtered tokens with virtual pagination
+const filteredTokens = computed(() => {
   // Always use virtual pagination for smooth performance
   // Display only the amount specified by displayCount
-  results = results.slice(0, displayCount.value);
-
-  return results;
+  return cachedFilteredTokens.value.slice(0, displayCount.value);
 });
 
 // Calculate grid columns based on zoom level
@@ -696,27 +708,12 @@ function getTokenName(token: CodexToken) {
   return '';
 }
 
-function handleSearchDebounced() {
-  if (searchDebounceTimer.value) {
-    clearTimeout(searchDebounceTimer.value);
-  }
-
-  searchDebounceTimer.value = setTimeout(() => {
-    performIdSearch();
-  }, 500); // Increased from 300ms to 500ms for better debouncing
-}
-
-function performIdSearch() {
-  page.value = 1;
-  refetch();
-}
-
 function handleFiltersUpdate(newFilters: typeof filters) {
+  // Update filters - all filtering happens client-side via computed properties
   Object.assign(filters, newFilters);
-  filtersRef.value = { ...newFilters };
-
-  // Always debounce to prevent flooding
-  handleSearchDebounced();
+  
+  // Reset virtual pagination to show from beginning
+  displayCount.value = 36;
 }
 
 // Store initial zoom level for responsive behavior
@@ -762,9 +759,6 @@ onMounted(() => {
 
 onBeforeUnmount(() => {
   window.removeEventListener("scroll", handleScroll);
-  if (searchDebounceTimer.value) {
-    clearTimeout(searchDebounceTimer.value);
-  }
   if (scrollThrottleTimer.value) {
     clearTimeout(scrollThrottleTimer.value);
   }
