@@ -8,9 +8,9 @@
     ></div>
 
     <!-- Museum Mode Controls - Floating -->
-    <div v-if="isMuseumMode" class="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 flex items-center gap-6 bg-black/90 backdrop-blur-sm border border-white/20 rounded-lg px-6 py-3 shadow-2xl animate-in fade-in duration-300">
+    <div v-if="isMuseumMode" class="fixed top-4 left-1/2 transform -translate-x-1/2 z-50 flex items-center gap-2 md:gap-6 bg-black/90 backdrop-blur-sm border border-white/20 rounded-lg px-3 md:px-6 py-3 shadow-2xl animate-in fade-in duration-300 max-w-[95vw] overflow-x-auto">
       <!-- Left Side: Filter, Zoom, Quality -->
-      <div class="flex items-center gap-4">
+      <div class="flex items-center gap-2 md:gap-4">
         <!-- Filters Toggle Button -->
         <button
           @click="showFiltersInMuseum = !showFiltersInMuseum"
@@ -25,17 +25,17 @@
         </button>
 
         <!-- Zoom Slider -->
-        <div class="flex items-center gap-3">
-          <label class="text-sm text-white/70 whitespace-nowrap">Zoom</label>
+        <div class="flex items-center gap-2 md:gap-3">
+          <label class="text-sm text-white/70 whitespace-nowrap hidden md:inline">Zoom</label>
           <input
             type="range"
             v-model.number="zoomLevel"
             min="0"
             max="100"
             step="5"
-            class="w-48 h-2 bg-white/10 rounded-lg appearance-none cursor-pointer accent-white"
+            class="w-24 md:w-48 h-2 bg-white/10 rounded-lg appearance-none cursor-pointer accent-white"
           />
-          <span class="text-xs text-white/50 w-10">{{ zoomLevel }}%</span>
+          <span class="text-xs text-white/50 w-8 md:w-10">{{ zoomLevel }}%</span>
         </div>
 
         <!-- Quality Toggle Button -->
@@ -52,7 +52,7 @@
       <div class="h-8 w-px bg-white/20"></div>
 
       <!-- Right Side: Easter Egg, Exit -->
-      <div class="flex items-center gap-4">
+      <div class="flex items-center gap-2 md:gap-4">
         <!-- Easter Egg Toggle Button -->
         <button
           @click="toggleEasterEgg"
@@ -80,9 +80,9 @@
     </div>
 
     <!-- Control Bar - Sticky to top (above both filters and grid) -->
-    <div v-show="!isMuseumMode" class="sticky top-0 z-30 mb-4 flex items-center justify-between gap-4 bg-black/95 backdrop-blur-sm py-3 px-4 border-b border-white/10">
+    <div v-show="!isMuseumMode" class="sticky top-0 z-30 mb-4 flex items-center justify-between gap-2 md:gap-4 bg-black/95 backdrop-blur-sm py-3 px-2 md:px-4 border-b border-white/10 overflow-x-auto">
       <!-- Left Side: Filter, Zoom, Quality -->
-      <div class="flex items-center gap-4">
+      <div class="flex items-center gap-2 md:gap-4">
         <!-- Filters Toggle Button -->
         <button
           @click="showFiltersInNormal = !showFiltersInNormal"
@@ -97,8 +97,8 @@
         </button>
 
         <!-- Zoom Slider -->
-        <div class="flex items-center gap-3 min-w-[200px]">
-          <label class="text-sm text-white/70 whitespace-nowrap">Zoom</label>
+        <div class="flex items-center gap-2 md:gap-3 min-w-[120px] md:min-w-[200px]">
+          <label class="text-sm text-white/70 whitespace-nowrap hidden md:inline">Zoom</label>
           <input
             type="range"
             v-model.number="zoomLevel"
@@ -107,7 +107,7 @@
             step="5"
             class="flex-1 h-2 bg-white/10 rounded-lg appearance-none cursor-pointer accent-white"
           />
-          <span class="text-xs text-white/50 w-10">{{ zoomLevel }}%</span>
+          <span class="text-xs text-white/50 w-8 md:w-10">{{ zoomLevel }}%</span>
         </div>
 
         <!-- Quality Toggle Button -->
@@ -121,7 +121,7 @@
       </div>
 
       <!-- Right Side: Easter Egg, Fullscreen, Sort -->
-      <div class="flex items-center gap-4">
+      <div class="flex items-center gap-2 md:gap-4">
         <!-- Easter Egg Toggle Button -->
         <button
           @click="toggleEasterEgg"
@@ -325,8 +325,8 @@ const scrollThrottleTimer = ref<NodeJS.Timeout | null>(null);
 const filtersRef = ref({ ...filters });
 
 // Zoom level state (0% = smallest, 100% = largest)
-// Starting at 55% gives us 5 columns per row
-const zoomLevel = ref(55);
+// Starting at 85% on mobile (fewer columns), 55% on desktop (5 columns per row)
+const zoomLevel = ref(typeof window !== 'undefined' && window.innerWidth < 768 ? 85 : 55);
 
 // Museum mode state (shared with layout)
 const isMuseumMode = useState("isMuseumMode", () => false);
@@ -713,6 +713,9 @@ function handleFiltersUpdate(newFilters: typeof filters) {
   handleSearchDebounced();
 }
 
+// Store initial zoom level for responsive behavior
+const initialZoomSet = ref(false);
+
 onMounted(() => {
   window.addEventListener("scroll", handleScroll);
   checkContentHeight();
@@ -726,10 +729,29 @@ onMounted(() => {
     }
   });
 
+  // Handle viewport resize for responsive zoom
+  const handleResize = () => {
+    // Only auto-adjust zoom if user hasn't manually changed it
+    if (!initialZoomSet.value) {
+      const isMobile = window.innerWidth < 768;
+      const newZoom = isMobile ? 85 : 55;
+      if (zoomLevel.value !== newZoom) {
+        zoomLevel.value = newZoom;
+      }
+    }
+  };
+
+  window.addEventListener('resize', handleResize);
+
   // Activate easter egg (hover mode) after 30 seconds
   setTimeout(() => {
     easterEggActive.value = true;
   }, 30000);
+
+  // Clean up resize listener
+  onBeforeUnmount(() => {
+    window.removeEventListener('resize', handleResize);
+  });
 });
 
 onBeforeUnmount(() => {
@@ -799,5 +821,11 @@ watch(() => isMuseumMode.value, (newValue) => {
     // Also hide filters in museum mode when exiting
     showFiltersInMuseum.value = false;
   }
+});
+
+// Watch zoom level changes to track user manual adjustments
+watch(zoomLevel, () => {
+  // Mark that user has manually adjusted zoom
+  initialZoomSet.value = true;
 });
 </script>

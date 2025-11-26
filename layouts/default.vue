@@ -8,9 +8,9 @@
     />
 
     <header v-show="!isMuseumMode">
-      <nav class="light:bg-white relative z-50 border-b border-white/10 bg-black">
+      <nav class="light:bg-white relative z-50 border-b border-white/10 bg-black overflow-x-hidden">
         <div class="mx-auto max-w-7xl px-2 sm:px-6 lg:px-8">
-          <div class="relative flex h-28 items-center justify-center overflow-y-hidden">
+          <div class="relative flex h-28 items-center justify-center overflow-hidden">
             <!-- Burger menu button for mobile - only show on pages other than token details -->
             <button
               v-if="showMobileMenu"

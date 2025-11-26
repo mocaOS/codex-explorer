@@ -1,5 +1,5 @@
 <template>
-  <div class="font-display font-inter min-h-screen text-white">
+  <div class="font-display font-inter min-h-screen text-white overflow-x-hidden">
     <NuxtLayout>
       <NuxtLoadingIndicator color="#FFFFFF" />
       <NuxtPage />
@@ -23,5 +23,10 @@ html, body {
 
 html {
   overflow-y: scroll;
+  overflow-x: hidden;
+}
+
+body {
+  overflow-x: hidden;
 }
 </style>
