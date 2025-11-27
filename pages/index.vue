@@ -578,12 +578,18 @@ const applyFilters = (tokens: CodexToken[], filterState = filters) => {
   const collectionSet = filterState.dnaMOCACollection.length > 0 ? new Set(filterState.dnaMOCACollection) : null;
   
   // Prepare search term once if needed
-  const searchLower = (filterState.search && !/^\d+$/.test(filterState.search.trim()))
-    ? filterState.search.trim().toLowerCase()
-    : null;
+  const searchTerm = filterState.search ? filterState.search.trim() : '';
+  const isIdSearch = searchTerm && /^\d+$/.test(searchTerm);
+  const searchId = isIdSearch ? parseInt(searchTerm) : null;
+  const searchLower = (searchTerm && !isIdSearch) ? searchTerm.toLowerCase() : null;
 
   // Single pass filter for maximum performance
   return tokens.filter(token => {
+    // ID search filter (exact match)
+    if (searchId !== null && token.id !== searchId) {
+      return false;
+    }
+    
     // Character filter (with Alien/Ape special case) - OR logic
     if (characterSet) {
       // Check if token matches ANY of the selected characters
@@ -606,7 +612,7 @@ const applyFilters = (tokens: CodexToken[], filterState = filters) => {
     if (portraitSet && !portraitSet.has(token.dna3)) return false;
     if (collectionSet && !collectionSet.has(token.dna4)) return false;
     
-    // Name search filter
+    // Name search filter (partial match)
     if (searchLower && token.name) {
       const names = Array.isArray(token.name) ? token.name : [token.name];
       if (!names.some(name => name && name.toLowerCase().includes(searchLower))) {
@@ -664,7 +670,7 @@ const cachedFilteredTokens = computed(() => {
     filters.dnaMemetic.length > 0 ||
     filters.dnaArtistSelfPortrait.length > 0 ||
     filters.dnaMOCACollection.length > 0 ||
-    (filters.search && !/^\d+$/.test(filters.search.trim()));
+    (filters.search && filters.search.trim().length > 0); // Include both ID and name searches
   
   if (!hasFilters) {
     return tokens; // Return all tokens if no filters
