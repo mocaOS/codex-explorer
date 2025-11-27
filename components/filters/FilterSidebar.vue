@@ -27,14 +27,26 @@
     <div class="space-y-4">
 
 
-      <div>
-        <h3 class="mb-2 text-sm font-medium">
-          Character
-          <span v-if="localFilters.character.length > 0" class="ml-1 text-xs text-white/50">
-            ({{ localFilters.character.length }} selected)
-          </span>
-        </h3>
-        <div class="max-h-48 overflow-y-auto rounded-md border border-white/10 bg-neutral-900 p-2">
+      <div class="rounded-md border border-white/10 bg-neutral-900/50">
+        <button
+          @click="toggleAccordion('character')"
+          class="flex w-full items-center justify-between px-3 py-2.5 text-left transition-colors hover:bg-white/5"
+        >
+          <h3 class="text-sm font-medium">
+            Character
+            <span v-if="localFilters.character.length > 0" class="ml-1 text-xs text-white/50">
+              ({{ localFilters.character.length }} selected)
+            </span>
+          </h3>
+          <ChevronDown 
+            class="h-4 w-4 transition-transform duration-200"
+            :class="{ 'rotate-180': accordionState.character }"
+          />
+        </button>
+        <div 
+          v-show="accordionState.character"
+          class="max-h-48 overflow-y-auto border-t border-white/10 p-2"
+        >
           <label
             v-for="character in sortedCharacters"
             :key="character"
@@ -55,14 +67,26 @@
         </div>
       </div>
 
-      <div>
-        <h3 class="mb-2 text-sm font-medium">
-          DNA Lineage
-          <span v-if="localFilters.dnaLineage.length > 0" class="ml-1 text-xs text-white/50">
-            ({{ localFilters.dnaLineage.length }} selected)
-          </span>
-        </h3>
-        <div class="max-h-48 overflow-y-auto rounded-md border border-white/10 bg-neutral-900 p-2">
+      <div class="rounded-md border border-white/10 bg-neutral-900/50">
+        <button
+          @click="toggleAccordion('dnaLineage')"
+          class="flex w-full items-center justify-between px-3 py-2.5 text-left transition-colors hover:bg-white/5"
+        >
+          <h3 class="text-sm font-medium">
+            DNA Lineage
+            <span v-if="localFilters.dnaLineage.length > 0" class="ml-1 text-xs text-white/50">
+              ({{ localFilters.dnaLineage.length }} selected)
+            </span>
+          </h3>
+          <ChevronDown 
+            class="h-4 w-4 transition-transform duration-200"
+            :class="{ 'rotate-180': accordionState.dnaLineage }"
+          />
+        </button>
+        <div 
+          v-show="accordionState.dnaLineage"
+          class="max-h-48 overflow-y-auto border-t border-white/10 p-2"
+        >
           <label
             v-for="lineage in sortedDnaLineages"
             :key="lineage"
@@ -83,14 +107,26 @@
         </div>
       </div>
 
-      <div>
-        <h3 class="mb-2 text-sm font-medium">
-          DNA Memetic
-          <span v-if="localFilters.dnaMemetic.length > 0" class="ml-1 text-xs text-white/50">
-            ({{ localFilters.dnaMemetic.length }} selected)
-          </span>
-        </h3>
-        <div class="max-h-48 overflow-y-auto rounded-md border border-white/10 bg-neutral-900 p-2">
+      <div class="rounded-md border border-white/10 bg-neutral-900/50">
+        <button
+          @click="toggleAccordion('dnaMemetic')"
+          class="flex w-full items-center justify-between px-3 py-2.5 text-left transition-colors hover:bg-white/5"
+        >
+          <h3 class="text-sm font-medium">
+            DNA Memetic
+            <span v-if="localFilters.dnaMemetic.length > 0" class="ml-1 text-xs text-white/50">
+              ({{ localFilters.dnaMemetic.length }} selected)
+            </span>
+          </h3>
+          <ChevronDown 
+            class="h-4 w-4 transition-transform duration-200"
+            :class="{ 'rotate-180': accordionState.dnaMemetic }"
+          />
+        </button>
+        <div 
+          v-show="accordionState.dnaMemetic"
+          class="max-h-48 overflow-y-auto border-t border-white/10 p-2"
+        >
           <label
             v-for="memetic in sortedDnaMemetics"
             :key="memetic"
@@ -111,14 +147,26 @@
         </div>
       </div>
 
-      <div>
-        <h3 class="mb-2 text-sm font-medium">
-          DNA Artist Self-Portrait
-          <span v-if="localFilters.dnaArtistSelfPortrait.length > 0" class="ml-1 text-xs text-white/50">
-            ({{ localFilters.dnaArtistSelfPortrait.length }} selected)
-          </span>
-        </h3>
-        <div class="max-h-48 overflow-y-auto rounded-md border border-white/10 bg-neutral-900 p-2">
+      <div class="rounded-md border border-white/10 bg-neutral-900/50">
+        <button
+          @click="toggleAccordion('dnaArtistSelfPortrait')"
+          class="flex w-full items-center justify-between px-3 py-2.5 text-left transition-colors hover:bg-white/5"
+        >
+          <h3 class="text-sm font-medium">
+            DNA Artist Self-Portrait
+            <span v-if="localFilters.dnaArtistSelfPortrait.length > 0" class="ml-1 text-xs text-white/50">
+              ({{ localFilters.dnaArtistSelfPortrait.length }} selected)
+            </span>
+          </h3>
+          <ChevronDown 
+            class="h-4 w-4 transition-transform duration-200"
+            :class="{ 'rotate-180': accordionState.dnaArtistSelfPortrait }"
+          />
+        </button>
+        <div 
+          v-show="accordionState.dnaArtistSelfPortrait"
+          class="max-h-48 overflow-y-auto border-t border-white/10 p-2"
+        >
           <label
             v-for="portrait in sortedDnaArtistSelfPortraits"
             :key="portrait"
@@ -139,14 +187,26 @@
         </div>
       </div>
 
-      <div>
-        <h3 class="mb-2 text-sm font-medium">
-          DNA MOCA Collection
-          <span v-if="localFilters.dnaMOCACollection.length > 0" class="ml-1 text-xs text-white/50">
-            ({{ localFilters.dnaMOCACollection.length }} selected)
-          </span>
-        </h3>
-        <div class="max-h-48 overflow-y-auto rounded-md border border-white/10 bg-neutral-900 p-2">
+      <div class="rounded-md border border-white/10 bg-neutral-900/50">
+        <button
+          @click="toggleAccordion('dnaMOCACollection')"
+          class="flex w-full items-center justify-between px-3 py-2.5 text-left transition-colors hover:bg-white/5"
+        >
+          <h3 class="text-sm font-medium">
+            DNA MOCA Collection
+            <span v-if="localFilters.dnaMOCACollection.length > 0" class="ml-1 text-xs text-white/50">
+              ({{ localFilters.dnaMOCACollection.length }} selected)
+            </span>
+          </h3>
+          <ChevronDown 
+            class="h-4 w-4 transition-transform duration-200"
+            :class="{ 'rotate-180': accordionState.dnaMOCACollection }"
+          />
+        </button>
+        <div 
+          v-show="accordionState.dnaMOCACollection"
+          class="max-h-48 overflow-y-auto border-t border-white/10 p-2"
+        >
           <label
             v-for="collection in sortedDnaMOCACollections"
             :key="collection"
@@ -167,14 +227,26 @@
         </div>
       </div>
 
-      <div>
-        <h3 class="mb-2 text-sm font-medium">
-          Background
-          <span v-if="localFilters.background.length > 0" class="ml-1 text-xs text-white/50">
-            ({{ localFilters.background.length }} selected)
-          </span>
-        </h3>
-        <div class="max-h-48 overflow-y-auto rounded-md border border-white/10 bg-neutral-900 p-2">
+      <div class="rounded-md border border-white/10 bg-neutral-900/50">
+        <button
+          @click="toggleAccordion('background')"
+          class="flex w-full items-center justify-between px-3 py-2.5 text-left transition-colors hover:bg-white/5"
+        >
+          <h3 class="text-sm font-medium">
+            Background
+            <span v-if="localFilters.background.length > 0" class="ml-1 text-xs text-white/50">
+              ({{ localFilters.background.length }} selected)
+            </span>
+          </h3>
+          <ChevronDown 
+            class="h-4 w-4 transition-transform duration-200"
+            :class="{ 'rotate-180': accordionState.background }"
+          />
+        </button>
+        <div 
+          v-show="accordionState.background"
+          class="max-h-48 overflow-y-auto border-t border-white/10 p-2"
+        >
           <label
             v-for="background in sortedBackgrounds"
             :key="background"
@@ -195,14 +267,26 @@
         </div>
       </div>
 
-      <div>
-        <h3 class="mb-2 text-sm font-medium">
-          Background Texture
-          <span v-if="localFilters.backgroundTexture.length > 0" class="ml-1 text-xs text-white/50">
-            ({{ localFilters.backgroundTexture.length }} selected)
-          </span>
-        </h3>
-        <div class="max-h-48 overflow-y-auto rounded-md border border-white/10 bg-neutral-900 p-2">
+      <div class="rounded-md border border-white/10 bg-neutral-900/50">
+        <button
+          @click="toggleAccordion('backgroundTexture')"
+          class="flex w-full items-center justify-between px-3 py-2.5 text-left transition-colors hover:bg-white/5"
+        >
+          <h3 class="text-sm font-medium">
+            Background Texture
+            <span v-if="localFilters.backgroundTexture.length > 0" class="ml-1 text-xs text-white/50">
+              ({{ localFilters.backgroundTexture.length }} selected)
+            </span>
+          </h3>
+          <ChevronDown 
+            class="h-4 w-4 transition-transform duration-200"
+            :class="{ 'rotate-180': accordionState.backgroundTexture }"
+          />
+        </button>
+        <div 
+          v-show="accordionState.backgroundTexture"
+          class="max-h-48 overflow-y-auto border-t border-white/10 p-2"
+        >
           <label
             v-for="texture in sortedBackgroundTextures"
             :key="texture"
@@ -223,14 +307,26 @@
         </div>
       </div>
 
-      <div>
-        <h3 class="mb-2 text-sm font-medium">
-          Mood
-          <span v-if="localFilters.mood.length > 0" class="ml-1 text-xs text-white/50">
-            ({{ localFilters.mood.length }} selected)
-          </span>
-        </h3>
-        <div class="max-h-48 overflow-y-auto rounded-md border border-white/10 bg-neutral-900 p-2">
+      <div class="rounded-md border border-white/10 bg-neutral-900/50">
+        <button
+          @click="toggleAccordion('mood')"
+          class="flex w-full items-center justify-between px-3 py-2.5 text-left transition-colors hover:bg-white/5"
+        >
+          <h3 class="text-sm font-medium">
+            Mood
+            <span v-if="localFilters.mood.length > 0" class="ml-1 text-xs text-white/50">
+              ({{ localFilters.mood.length }} selected)
+            </span>
+          </h3>
+          <ChevronDown 
+            class="h-4 w-4 transition-transform duration-200"
+            :class="{ 'rotate-180': accordionState.mood }"
+          />
+        </button>
+        <div 
+          v-show="accordionState.mood"
+          class="max-h-48 overflow-y-auto border-t border-white/10 p-2"
+        >
           <label
             v-for="mood in sortedMoods"
             :key="mood"
@@ -264,6 +360,7 @@
 
 <script setup lang="ts">
 import { ref, reactive, watch, onMounted, onUnmounted, computed } from 'vue';
+import { ChevronDown } from 'lucide-vue-next';
 import traitCountsData from '~/assets/data/trait-counts.json';
 // Button and Input are auto-imported by Nuxt
 
@@ -387,6 +484,23 @@ const sortedDnaMOCACollections = computed(() => {
 
 // Local filters state
 const localFilters = reactive({ ...props.filters });
+
+// Accordion state - track which sections are open (only character open by default)
+const accordionState = reactive({
+  character: true,
+  dnaLineage: false,
+  dnaMemetic: false,
+  dnaArtistSelfPortrait: false,
+  dnaMOCACollection: false,
+  background: false,
+  backgroundTexture: false,
+  mood: false,
+});
+
+// Toggle accordion
+const toggleAccordion = (section: keyof typeof accordionState) => {
+  accordionState[section] = !accordionState[section];
+};
 
 // Animated counter display
 const displayedCount = ref(props.totalResults);
