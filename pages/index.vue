@@ -230,45 +230,57 @@
           'md:pl-0': !isMuseumMode && !showFiltersInNormal,
         }"
       >
-        <!-- Loading State -->
-        <div v-if="isLoadingTokens" class="grid gap-3" :style="{ gridTemplateColumns: `repeat(${gridColumns}, minmax(0, 1fr))` }">
-          <div v-for="i in 20" :key="i" class="rounded-md border border-white/10 p-3">
-            <div class="aspect-square w-full animate-pulse rounded bg-white/5"></div>
-            <div class="mt-2 h-4 animate-pulse rounded bg-white/5"></div>
+        <ClientOnly>
+          <!-- Loading State -->
+          <div v-if="isLoadingTokens" class="grid gap-3" :style="{ gridTemplateColumns: `repeat(${gridColumns}, minmax(0, 1fr))` }">
+            <div v-for="i in 20" :key="i" class="rounded-md border border-white/10 p-3">
+              <div class="aspect-square w-full animate-pulse rounded bg-white/5"></div>
+              <div class="mt-2 h-4 animate-pulse rounded bg-white/5"></div>
+            </div>
           </div>
-        </div>
 
-        <!-- Loaded Data -->
-        <div v-else class="grid gap-3" :style="{ gridTemplateColumns: `repeat(${gridColumns}, minmax(0, 1fr))` }">
-          <div
-            v-for="token in filteredTokens"
-            :key="token.id"
-            class="relative group"
-          >
-            <NuxtLink
-              :to="`/${token.id}`"
-              class="block cursor-pointer rounded-md border border-white/10 p-3 transition-all hover:scale-105 hover:shadow-lg"
-              :class="{ 'border-purple-500/50 shadow-purple-500/20': easterEggActive && characterOnlyIds.has(token.id) }"
+          <!-- Loaded Data -->
+          <div v-else class="grid gap-3" :style="{ gridTemplateColumns: `repeat(${gridColumns}, minmax(0, 1fr))` }">
+            <div
+              v-for="token in filteredTokens"
+              :key="token.id"
+              class="relative group"
             >
-              <div
-                @mouseenter="easterEggActive ? toggleCharacterOnly(token.id) : null"
-                :class="{ 'cursor-help': easterEggActive }"
+              <NuxtLink
+                :to="`/${token.id}`"
+                class="block cursor-pointer rounded-md border border-white/10 p-3 transition-all hover:scale-105 hover:shadow-lg"
+                :class="{ 'border-purple-500/50 shadow-purple-500/20': easterEggActive && characterOnlyIds.has(token.id) }"
               >
-                <img
-                  :src="getThumbnailUrl(token, characterOnlyIds.has(token.id))"
-                  height="264"
-                  width="264"
-                  alt="DeCC0 Preview"
-                  class="aspect-square w-full rounded object-cover transition-all duration-300"
-                  loading="lazy"
-                />
-              </div>
-              <h3 class="mt-2 text-center text-xs font-bold">
-                #{{ token.id }}{{ getTokenName(token) ? ` - ${getTokenName(token)}` : '' }}
-              </h3>
-            </NuxtLink>
+                <div
+                  @mouseenter="easterEggActive ? toggleCharacterOnly(token.id) : null"
+                  :class="{ 'cursor-help': easterEggActive }"
+                >
+                  <img
+                    :src="getThumbnailUrl(token, characterOnlyIds.has(token.id))"
+                    height="264"
+                    width="264"
+                    alt="DeCC0 Preview"
+                    class="aspect-square w-full rounded object-cover transition-all duration-300"
+                    loading="lazy"
+                  />
+                </div>
+                <h3 class="mt-2 text-center text-xs font-bold">
+                  #{{ token.id }}{{ getTokenName(token) ? ` - ${getTokenName(token)}` : '' }}
+                </h3>
+              </NuxtLink>
+            </div>
           </div>
-        </div>
+
+          <!-- Fallback for SSR -->
+          <template #fallback>
+            <div class="grid gap-3" :style="{ gridTemplateColumns: 'repeat(5, minmax(0, 1fr))' }">
+              <div v-for="i in 20" :key="i" class="rounded-md border border-white/10 p-3">
+                <div class="aspect-square w-full animate-pulse rounded bg-white/5"></div>
+                <div class="mt-2 h-4 animate-pulse rounded bg-white/5"></div>
+              </div>
+            </div>
+          </template>
+        </ClientOnly>
       </div>
     </div>
   </div>
@@ -330,7 +342,8 @@ const isCalculatingFilters = ref(false);
 
 // Zoom level state (0% = smallest, 100% = largest)
 // Starting at 85% on mobile (fewer columns), 55% on desktop (5 columns per row)
-const zoomLevel = ref(typeof window !== 'undefined' && window.innerWidth < 768 ? 85 : 55);
+// Initialize with desktop default to prevent hydration mismatch (will adjust on mount if needed)
+const zoomLevel = ref(55);
 
 // Museum mode state (shared with layout)
 const isMuseumMode = useState("isMuseumMode", () => false);
@@ -483,14 +496,14 @@ const { data: tokens, isLoading: isLoadingTokens, fetchNextPage, isFetchingNextP
   queryFn: async ({ pageParam = 0 }) => {
     // Fetch ALL records upfront for better UX
     // This enables instant infinite scrolling without API delays
-    
+
     // Only fetch on first page load (pageParam = 0)
     if (pageParam !== 0) {
       return []; // No more API calls after initial load
     }
 
     console.time('API Fetch Time');
-    
+
     const limit = 10000; // Always fetch all items
     const offset = 0;
 
@@ -505,10 +518,10 @@ const { data: tokens, isLoading: isLoadingTokens, fetchNextPage, isFetchingNextP
     try {
       const { data } = await axios.get('https://api.decc0s.com/items/codex', { params });
       const items = data.data as CodexToken[];
-      
+
       console.timeEnd('API Fetch Time');
       console.log(`✓ Loaded ${items.length} Art DeCC0s - all filtering happens client-side`);
-      
+
       return items;
     } catch (error) {
       console.error('Failed to fetch tokens:', error);
@@ -545,7 +558,7 @@ const allTokens = computed(() => {
   if (import.meta.server) {
     return [];
   }
-  
+
   const allItems: CodexToken[] = [];
 
   tokens.value?.pages.forEach((page) => {
@@ -576,7 +589,7 @@ const applyFilters = (tokens: CodexToken[], filterState = filters) => {
   const memeticSet = filterState.dnaMemetic.length > 0 ? new Set(filterState.dnaMemetic) : null;
   const portraitSet = filterState.dnaArtistSelfPortrait.length > 0 ? new Set(filterState.dnaArtistSelfPortrait) : null;
   const collectionSet = filterState.dnaMOCACollection.length > 0 ? new Set(filterState.dnaMOCACollection) : null;
-  
+
   // Prepare search term once if needed
   const searchTerm = filterState.search ? filterState.search.trim() : '';
   const isIdSearch = searchTerm && /^\d+$/.test(searchTerm);
@@ -589,20 +602,20 @@ const applyFilters = (tokens: CodexToken[], filterState = filters) => {
     if (searchId !== null && token.id !== searchId) {
       return false;
     }
-    
+
     // Character filter (with Alien/Ape special case) - OR logic
     if (characterSet) {
       // Check if token matches ANY of the selected characters
       const matchesAlien = characterSet.has('Alien') && token.background_category === 'Alien';
       const matchesApe = characterSet.has('Ape') && token.background_category === 'Ape';
       const matchesNormalChar = characterSet.has(token.decc0_type);
-      
+
       // Token must match at least one selected character
       if (!matchesAlien && !matchesApe && !matchesNormalChar) {
         return false;
       }
     }
-    
+
     // All other filters with early returns for performance
     if (moodSet && !moodSet.has(token.mood)) return false;
     if (backgroundSet && !backgroundSet.has(token.background_category)) return false;
@@ -611,7 +624,7 @@ const applyFilters = (tokens: CodexToken[], filterState = filters) => {
     if (memeticSet && !memeticSet.has(token.dna2)) return false;
     if (portraitSet && !portraitSet.has(token.dna3)) return false;
     if (collectionSet && !collectionSet.has(token.dna4)) return false;
-    
+
     // Name search filter (partial match)
     if (searchLower && token.name) {
       const names = Array.isArray(token.name) ? token.name : [token.name];
@@ -619,7 +632,7 @@ const applyFilters = (tokens: CodexToken[], filterState = filters) => {
         return false;
       }
     }
-    
+
     return true;
   });
 };
@@ -630,15 +643,15 @@ let calculatingTimeout: NodeJS.Timeout | null = null;
 if (import.meta.client) {
   watch(() => ({ ...filters }), async () => {
     isCalculatingFilters.value = true;
-    
+
     // Clear any existing timeout
     if (calculatingTimeout) {
       clearTimeout(calculatingTimeout);
     }
-    
+
     // Wait for next tick to let computed run
     await nextTick();
-    
+
     // Timeline: 0ms = click, 300ms = animation starts (if needed), 500ms = done
     // This ensures animation has time to run if filtering takes long
     calculatingTimeout = setTimeout(() => {
@@ -653,14 +666,14 @@ const cachedFilteredTokens = computed(() => {
   if (import.meta.server) {
     return [];
   }
-  
+
   const tokens = allTokens.value;
-  
+
   // Early return if no tokens loaded yet
   if (!tokens || tokens.length === 0) {
     return [];
   }
-  
+
   // Early return if no filters applied
   const hasFilters = filters.character.length > 0 ||
     filters.mood.length > 0 ||
@@ -671,11 +684,11 @@ const cachedFilteredTokens = computed(() => {
     filters.dnaArtistSelfPortrait.length > 0 ||
     filters.dnaMOCACollection.length > 0 ||
     (filters.search && filters.search.trim().length > 0); // Include both ID and name searches
-  
+
   if (!hasFilters) {
     return tokens; // Return all tokens if no filters
   }
-  
+
   return applyFilters(tokens, filters);
 });
 
@@ -685,13 +698,28 @@ const totalFilteredCount = computed(() => {
   return cachedFilteredTokens.value.length;
 });
 
-// Filtered tokens with virtual pagination
+// Filtered tokens with virtual pagination and sorting
 const filteredTokens = computed(() => {
   if (import.meta.server) return [];
-  
+
+  let tokens = [...cachedFilteredTokens.value];
+
+  // Apply sorting based on sortOrder
+  if (filters.sortOrder === 'asc') {
+    tokens.sort((a, b) => a.id - b.id);
+  } else if (filters.sortOrder === 'desc') {
+    tokens.sort((a, b) => b.id - a.id);
+  } else if (filters.sortOrder === 'random') {
+    // Fisher-Yates shuffle for random order
+    for (let i = tokens.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [tokens[i], tokens[j]] = [tokens[j], tokens[i]];
+    }
+  }
+
   // Always use virtual pagination for smooth performance
   // Display only the amount specified by displayCount
-  return cachedFilteredTokens.value.slice(0, displayCount.value);
+  return tokens.slice(0, displayCount.value);
 });
 
 // Calculate grid columns based on zoom level
@@ -761,7 +789,7 @@ function getTokenName(token: CodexToken) {
 function handleFiltersUpdate(newFilters: typeof filters) {
   // Update filters - all filtering happens client-side via computed properties
   Object.assign(filters, newFilters);
-  
+
   // Reset virtual pagination to show from beginning
   displayCount.value = 36;
 }
@@ -772,7 +800,7 @@ const initialZoomSet = ref(false);
 onMounted(() => {
   console.log('✓ Page mounted and interactive');
   console.time('Data Load Time');
-  
+
   window.addEventListener("scroll", handleScroll);
   checkContentHeight();
 
@@ -784,6 +812,12 @@ onMounted(() => {
       isMuseumMode.value = false;
     }
   });
+
+  // Set initial zoom based on viewport (after mount to avoid hydration mismatch)
+  const isMobile = window.innerWidth < 768;
+  if (isMobile) {
+    zoomLevel.value = 85;
+  }
 
   // Handle viewport resize for responsive zoom
   const handleResize = () => {
@@ -859,9 +893,9 @@ function checkContentHeight() {
 }
 
 // Watch for any filter changes and reset display count
-watch(filters, () => {
+watch(() => ({ ...filters }), () => {
   displayCount.value = 36;
-});
+}, { deep: true });
 
 // Watch for museum mode changes to handle zoom restoration on navigation
 watch(() => isMuseumMode.value, (newValue) => {
