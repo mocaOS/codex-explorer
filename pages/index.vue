@@ -698,8 +698,8 @@ const totalFilteredCount = computed(() => {
   return cachedFilteredTokens.value.length;
 });
 
-// Filtered tokens with virtual pagination and sorting
-const filteredTokens = computed(() => {
+// Sorted tokens (cached, doesn't depend on displayCount to avoid re-shuffling on scroll)
+const sortedTokens = computed(() => {
   if (import.meta.server) return [];
 
   let tokens = [...cachedFilteredTokens.value];
@@ -717,9 +717,16 @@ const filteredTokens = computed(() => {
     }
   }
 
+  return tokens;
+});
+
+// Filtered tokens with virtual pagination (sliced from cached sorted tokens)
+const filteredTokens = computed(() => {
+  if (import.meta.server) return [];
+
   // Always use virtual pagination for smooth performance
   // Display only the amount specified by displayCount
-  return tokens.slice(0, displayCount.value);
+  return sortedTokens.value.slice(0, displayCount.value);
 });
 
 // Calculate grid columns based on zoom level
