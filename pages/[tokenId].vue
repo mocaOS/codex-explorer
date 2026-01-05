@@ -16,7 +16,8 @@
           Art DeCC0 #{{ token.codexData.id }}
         </h1>
         <p class="text-xs font-light text-white/30">
-          <span class="font-normal">Owner:</span> {{ token.owner }}
+          <span class="font-normal">Owner:</span> 
+          <span class="font-mono">{{ displayOwnerName }}</span>
         </p>
         <hr class="my-3 border-white/10">
         <ul class="mb-3 grid grid-cols-2 gap-x-3 gap-y-5 sm:grid-cols-3 lg:grid-cols-3">
@@ -762,6 +763,20 @@ const { data: token, isLoading: isLoadingToken, suspense: suspenseToken } = useQ
 });
 
 await suspenseToken();
+
+// ENS Resolution for owner
+const { resolveBatchEns, getDisplayName } = useEnsResolver();
+
+// Resolve ENS name for the owner
+if (import.meta.client && token.value?.owner) {
+  resolveBatchEns([token.value.owner]);
+}
+
+// Display owner name (ENS or shortened address)
+const displayOwnerName = computed(() => {
+  if (!token.value?.owner) return 'Unknown';
+  return getDisplayName(token.value.owner);
+});
 
 // Accordion states
 const isOpen = ref(false);

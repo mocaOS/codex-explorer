@@ -573,9 +573,12 @@ const allTokens = computed(() => {
   return allItems;
 });
 
+// ENS Resolution
+const { resolveBatchEns, isResolving: isResolvingEns } = useEnsResolver();
+
 // Extract unique owners dynamically from token data (after allTokens is defined)
 const ownerCounts = ref<Record<string, number>>({});
-watch(allTokens, (tokens) => {
+watch(allTokens, async (tokens) => {
   if (tokens && tokens.length > 0) {
     // Extract unique owners and count them
     const counts: Record<string, number> = {};
@@ -587,7 +590,20 @@ watch(allTokens, (tokens) => {
     ownerCounts.value = counts;
     
     // Sort owners by count (highest count first - most DeCC0s to fewest)
+    // This ensures biggest holders are resolved first (they appear on-screen)
     uniqueTraits.owners = Object.keys(counts).sort((a, b) => counts[b] - counts[a]);
+    
+    // Resolve ENS names for all unique owners in the background
+    // Addresses are already sorted by holder count, so first batch (top 100) 
+    // will update on-screen immediately, rest happens below the fold
+    if (import.meta.client && uniqueTraits.owners.length > 0) {
+      console.log(`📊 ${uniqueTraits.owners.length} unique owners (sorted by holder count)`);
+      try {
+        await resolveBatchEns(uniqueTraits.owners);
+      } catch (error) {
+        console.warn('ENS resolution error:', error);
+      }
+    }
   }
 }, { immediate: true });
 

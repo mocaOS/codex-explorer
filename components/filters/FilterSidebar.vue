@@ -371,9 +371,17 @@
           <div class="p-2 border-b border-white/10">
             <Input
               v-model="ownerSearch"
-              placeholder="Paste address to search..."
+              placeholder="Search address or ENS name..."
               class="w-full rounded-md border border-white/10 bg-neutral-800 px-2 py-1.5 text-xs text-white placeholder:text-gray-500"
             />
+            <!-- ENS Resolution Status -->
+            <div v-if="isResolvingEns" class="mt-1 text-[10px] text-white/30 flex items-center gap-1">
+              <svg class="animate-spin h-3 w-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+              </svg>
+              <span>Resolving ENS names...</span>
+            </div>
           </div>
           
           <!-- Owner List -->
@@ -391,7 +399,7 @@
                 class="h-4 w-4 shrink-0 rounded border-white/30 bg-neutral-800 text-white accent-white focus:ring-2 focus:ring-white/50 focus:ring-offset-0"
               />
               <span class="flex-1 text-xs font-mono">
-                {{ shortenAddress(owner) }}
+                {{ getDisplayName(owner) }}
                 <span class="text-xs text-white/40">({{ ownerCounts[owner] || 0 }})</span>
               </span>
             </label>
@@ -542,7 +550,11 @@ const sortedDnaMOCACollections = computed(() => {
   });
 });
 
+// Import ENS resolver composable
+const { getDisplayName, matchesAddress, isResolving: isResolvingEns } = useEnsResolver();
+
 // Sorted owners by count (highest count first - most DeCC0s to fewest)
+// ENS names will update in place as they resolve
 const sortedOwners = computed(() => {
   return [...props.uniqueTraits.owners].sort((a, b) => {
     const countA = props.ownerCounts[a] || 0;
@@ -551,26 +563,20 @@ const sortedOwners = computed(() => {
   });
 });
 
-// Helper function to shorten Ethereum addresses
-function shortenAddress(address: string): string {
-  if (!address || address.length < 10) return address;
-  return `${address.slice(0, 6)}...${address.slice(-6)}`;
-}
-
 // Owner search state
 const ownerSearch = ref('');
 
-// Filtered owners based on search
+// Filtered owners based on search (supports both address and ENS name matching)
 const filteredOwners = computed(() => {
   if (!ownerSearch.value.trim()) {
     return sortedOwners.value;
   }
   
-  const searchLower = ownerSearch.value.toLowerCase().trim();
+  const searchTerm = ownerSearch.value.trim();
   
-  // Filter owners that match the search
+  // Filter owners that match the search (address or ENS name)
   const matching = sortedOwners.value.filter(owner => 
-    owner.toLowerCase().includes(searchLower)
+    matchesAddress(owner, searchTerm)
   );
   
   // Always show checked owners even if they don't match search
