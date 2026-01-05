@@ -27,8 +27,6 @@ The Museum of Crypto Art isn't just archiving the past—it's **seeding the futu
 
 **We're building in public, releasing features as we discover them, and inviting you to build with us.** Whether you're creating AI agents, writing stories, building games, or simply exploring art history through a new lens—these 10,000 characters are yours to discover.
 
-> **✨ Beta Features Active**: This release includes interactive features like hover-to-swap mode (easter egg), dynamic zoom control, quality switching, and immersive museum mode with fullscreen support!
-
 **🔗 External Resources**
 - **API Documentation**: [docs.decc0s.com](https://docs.decc0s.com)
 - **Codex Backend**: [github.com/mocaOS/codex](https://github.com/mocaOS/codex)
@@ -49,20 +47,17 @@ The Museum of Crypto Art isn't just archiving the past—it's **seeding the futu
 - **Optimized image delivery** via Directus asset transformations and IPFS gateway
 - **Zero-refetch architecture** - loads entire collection once, then instant filtering with zero API calls
 
-### ✨ Interactive Features (Beta)
-- **🎭 Hover-to-Swap Mode** (Easter Egg)
-  - Hover over any decc0 to reveal character-only view (no background)
-  - Hover again to swap back to full composite
-  - Toggle feature on/off with sparkles icon ✨
-  - Purple border indicates swapped images
-  - **Activates after 30 seconds** - let the magic reveal itself!
-  - **Smart cooldown** - 3 second pause during fullscreen transitions to prevent confusion
-
+### ✨ Interactive Features
+- **✨ Hover Mode (Easter Egg)**:
+  - Hover over decc0s to swap between full composite and character-only views
+  - Click sparkles icon to toggle this feature on/off
+  - Purple border indicates images in character-only mode
+  
 - **🖥️ Museum Mode**
   - Full browser fullscreen experience
   - Immersive viewing with floating controls
   - Smart zoom adjustment maintains consistent decc0 size
-  - Access zoom, quality, and easter egg controls
+  - Access zoom and quality controls
   - Exit with ESC key or close button
 
 - **📐 Smart Zoom System**
@@ -74,7 +69,7 @@ The Museum of Crypto Art isn't just archiving the past—it's **seeding the futu
 ### 🔍 Advanced Search & Filtering
 - **Smart search bar** - searches by Token ID (exact match) or Character Name (partial match)
 - **Multi-select checkboxes** with occurrence counts displayed
-- **Real-time trait filtering** across 8 categories:
+- **Real-time trait filtering** across 9 categories:
   - Character Type (7 types including ultra-rare Alien & Ape)
   - Background Style (16 art movements)
   - Background Texture (7 textures)
@@ -83,6 +78,7 @@ The Museum of Crypto Art isn't just archiving the past—it's **seeding the futu
   - DNA Memetic (17 crypto culture references)
   - DNA Artist Self-Portrait (20 famous artists)
   - DNA MOCA Collection (71 artists from MOCA Genesis)
+  - **Owner** (Ethereum wallet addresses with search)
 - **Smart OR/AND Logic**:
   - **Within a category** (OR): Selecting multiple options shows tokens matching ANY selection
     - Example: Character "Alien + Ape" = 33 results (9 + 24)
@@ -199,9 +195,9 @@ The SSR build generates a Node.js server in `.output/server/` that handles both 
 The gallery includes a comprehensive control bar with:
 - **Zoom Slider**: Real-time grid density adjustment (0%-100%)
 - **Quality Toggle**: Switch between 256p, 1024p, and 4K quality
-- **Easter Egg Toggle** (✨): Enable/disable hover-to-swap mode
 - **Museum Mode** (🖥️): Enter fullscreen immersive viewing
 - **Sort Dropdown**: Ascending, Descending, or Random order
+- **Filter Toggle**: Show/hide filter sidebar
 
 In Museum Mode, controls appear as floating overlay at the top center.
 
@@ -232,11 +228,6 @@ The Codex Explorer achieves exceptional performance by:
 5. **Infinite Scroll**: Scroll down to load more items automatically
 
 ### Interactive Features
-- **✨ Hover Mode (Easter Egg)**:
-  - Hover over decc0s to swap between full composite and character-only views
-  - Click sparkles icon to toggle this feature on/off
-  - Purple border indicates images in character-only mode
-
 - **🖥️ Museum Mode**:
   - Click fullscreen icon to enter immersive viewing mode
   - Browser goes fullscreen with floating controls
@@ -246,13 +237,15 @@ The Codex Explorer achieves exceptional performance by:
 ### Searching for DeCC0s
 - **By ID**: Type a number (e.g., `420`) to find exact token
 - **By Name**: Type text (e.g., `Chayachi`) to find all matching names
+- **By Owner**: Paste Ethereum address to filter by wallet
 - Search results update instantly as you type
 
 ### Filtering by Traits
-1. Open the filter sidebar (visible on desktop, toggle on mobile)
-2. Select any combination of traits
-3. Results update instantly
-4. Click "Reset Filters" to clear all selections
+1. Filter sidebar is visible by default on desktop (toggle on mobile)
+2. Select any combination of traits across 9 categories
+3. Use the Owner filter search bar to paste Ethereum addresses
+4. Results update instantly
+5. Click "Reset Filters" to clear all selections
 
 ### Viewing Details
 1. Click any Art DeCC0 in the gallery
@@ -267,10 +260,10 @@ The Codex Explorer achieves exceptional performance by:
 - **Scroll** - Trigger infinite loading of more items
 
 ### Tips & Tricks
-- **Beta Easter Egg**: The hover-to-swap feature is enabled by default! Try hovering over decc0s to discover the character-only views
 - **Quality Management**: Start at 256p for fast browsing, switch to 4K when you find favorites
 - **Museum Mode**: Perfect for presentations or deep exploration - go fullscreen and adjust zoom to your preference
-- **Character Collection**: Use hover mode to "paint" your favorite character-only views across the grid
+- **Owner Filtering**: Paste any Ethereum address to see all DeCC0s owned by that wallet
+- **Multi-Select**: Combine multiple filters to find specific trait combinations
 
 ---
 
@@ -299,8 +292,10 @@ This frontend consumes the **MOCA Codex API** built on Directus. For comprehensi
 
 The application uses two data files for filtering functionality:
 
-1. **`assets/data/unique-traits.json`** - Contains lists of all possible trait values
+1. **`assets/data/unique-traits.json`** - Contains lists of all possible trait values (except owners, which are extracted dynamically)
 2. **`assets/data/trait-counts.json`** - Contains occurrence counts for each trait (generated by script)
+
+**Note**: Owner addresses are extracted dynamically from the API and do not need manual updating.
 
 To refresh trait counts with the latest API data:
 

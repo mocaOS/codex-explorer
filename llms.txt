@@ -1,0 +1,28 @@
+# MOCA Codex Documentation
+
+> Documentation files for Large Language Models
+
+## Documentation
+
+- [Query Guide](/query-guide.md): Complete guide to filtering, sorting, searching, and pagination in the MOCA Codex API
+- [MOCA Codex API](/introduction.md): A comprehensive RESTful interface for accessing and managing the MOCA Codex knowledge base
+- [Getting Started](/getting-started.md): Quick start guide for the MOCA Codex API
+- [Files Endpoints](/files.md): API endpoints for retrieving files and assets from the MOCA Codex
+- [Codex Endpoints](/codex.md): API endpoints for accessing and querying the MOCA Codex knowledge base
+- [Examples](/examples/introduction.md): Interactive examples demonstrating common query patterns for the MOCA Codex API
+- [Recent Files](/examples/files/recent-files.md): Get the most recently uploaded files
+- [List Files](/examples/files/list-files.md): Retrieve a list of files with basic metadata
+- [Get File Metadata](/examples/files/get-metadata.md): Retrieve detailed metadata for a specific file
+- [Filter Images](/examples/files/filter-images.md): Get only image files from the collection
+- [Custom Transformations](/examples/assets/transformations.md): Apply custom width, height, and format transformations
+- [Sharp Transformations](/examples/assets/sharp.md): Use Sharp API for advanced image processing
+- [Image Presets](/examples/assets/presets.md): Retrieve images using transformation presets
+- [Exclude Null Values](/examples/advanced/exclude-null.md): Filter out items with null values in specific fields
+- [Complex Filters](/examples/advanced/complex-filters.md): Combine multiple filters using logical operators
+- [Sorting](/examples/codex/sorting.md): Sort codex items by various fields
+- [Full-Text Search](/examples/codex/search.md): Search across all codex fields
+- [Pagination](/examples/codex/pagination.md): Retrieve paginated results with total counts
+- [List Items](/examples/codex/list-items.md): Retrieve all codex items with basic fields
+- [Query by Owner](/examples/codex/items-by-owner.md): Query all codex items owned by a specific Ethereum wallet address
+- [Get by ID](/examples/codex/get-by-id.md): Retrieve a specific codex item with all its details
+- [Filter by Name](/examples/codex/filter-by-name.md): Search for codex items containing a specific name

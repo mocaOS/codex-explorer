@@ -149,9 +149,9 @@
 
         <!-- Sort Dropdown -->
         <select
+          v-if="filters"
           v-model="filters.sortOrder"
           class="rounded-md border border-white/10 bg-neutral-900 px-3 py-2 text-sm text-white/70 focus:border-white/30 focus:outline-none"
-          @change="handleFiltersUpdate(filters)"
         >
           <option value="random">rand</option>
           <option value="asc">asc</option>
@@ -216,6 +216,7 @@
           @update:filters="handleFiltersUpdate"
           :filters="filters"
           :unique-traits="uniqueTraits"
+          :owner-counts="ownerCounts"
           :total-results="totalFilteredCount"
           :is-calculating="isCalculatingFilters"
         />
@@ -312,6 +313,7 @@ function closeMobileMenu() {
   unlockScroll();
 }
 
+// Initialize filters with default values
 const filters = reactive({
   search: "",
   background: [] as string[],
@@ -322,6 +324,7 @@ const filters = reactive({
   dnaMemetic: [] as string[],
   dnaArtistSelfPortrait: [] as string[],
   dnaMOCACollection: [] as string[],
+  owner: [] as string[],
   sortOrder: "asc" as "asc" | "desc" | "random",
 });
 
@@ -334,6 +337,7 @@ const uniqueTraits = reactive({
   dnaMemetics: [] as string[],
   dnaArtistSelfPortraits: [] as string[],
   dnaMOCACollections: [] as string[],
+  owners: [] as string[],
 });
 
 const page = ref(1);
@@ -351,8 +355,8 @@ const isMuseumMode = useState("isMuseumMode", () => false);
 // Museum mode filters visibility
 const showFiltersInMuseum = ref(false);
 
-// Normal mode filters visibility (for desktop)
-const showFiltersInNormal = ref(false);
+// Normal mode filters visibility (for desktop) - show by default
+const showFiltersInNormal = ref(true);
 
 // Function to enter browser fullscreen
 async function enterFullscreen() {
@@ -488,6 +492,7 @@ interface CodexToken {
   ipfs_final: string;
   ipfs_character: string;
   ipfs_background: string;
+  owner: string | null;
 }
 
 const { data: tokens, isLoading: isLoadingTokens, fetchNextPage, isFetchingNextPage, suspense: suspenseTokens, refetch } = useInfiniteQuery<CodexToken[]>({
@@ -511,7 +516,7 @@ const { data: tokens, isLoading: isLoadingTokens, fetchNextPage, isFetchingNextP
     const params: any = {
       limit,
       offset,
-      fields: 'id,name,description,thumbnail.*,thumbnail_character.*,thumbnail_background.*,background_category,background_texture,mood,decc0_type,dna1,dna2,dna3,dna4,ipfs_final,ipfs_character,ipfs_background',
+      fields: 'id,name,description,thumbnail.*,thumbnail_character.*,thumbnail_background.*,background_category,background_texture,mood,decc0_type,dna1,dna2,dna3,dna4,ipfs_final,ipfs_character,ipfs_background,owner',
       sort: 'id', // Simple ascending sort by default
     };
 
@@ -568,6 +573,24 @@ const allTokens = computed(() => {
   return allItems;
 });
 
+// Extract unique owners dynamically from token data (after allTokens is defined)
+const ownerCounts = ref<Record<string, number>>({});
+watch(allTokens, (tokens) => {
+  if (tokens && tokens.length > 0) {
+    // Extract unique owners and count them
+    const counts: Record<string, number> = {};
+    tokens.forEach(token => {
+      if (token.owner) {
+        counts[token.owner] = (counts[token.owner] || 0) + 1;
+      }
+    });
+    ownerCounts.value = counts;
+    
+    // Sort owners by count (highest count first - most DeCC0s to fewest)
+    uniqueTraits.owners = Object.keys(counts).sort((a, b) => counts[b] - counts[a]);
+  }
+}, { immediate: true });
+
 // Track when data loads for performance monitoring
 if (import.meta.client) {
   watch(allTokens, (tokens) => {
@@ -589,6 +612,7 @@ const applyFilters = (tokens: CodexToken[], filterState = filters) => {
   const memeticSet = filterState.dnaMemetic.length > 0 ? new Set(filterState.dnaMemetic) : null;
   const portraitSet = filterState.dnaArtistSelfPortrait.length > 0 ? new Set(filterState.dnaArtistSelfPortrait) : null;
   const collectionSet = filterState.dnaMOCACollection.length > 0 ? new Set(filterState.dnaMOCACollection) : null;
+  const ownerSet = filterState.owner.length > 0 ? new Set(filterState.owner) : null;
 
   // Prepare search term once if needed
   const searchTerm = filterState.search ? filterState.search.trim() : '';
@@ -624,6 +648,7 @@ const applyFilters = (tokens: CodexToken[], filterState = filters) => {
     if (memeticSet && !memeticSet.has(token.dna2)) return false;
     if (portraitSet && !portraitSet.has(token.dna3)) return false;
     if (collectionSet && !collectionSet.has(token.dna4)) return false;
+    if (ownerSet && token.owner && !ownerSet.has(token.owner)) return false;
 
     // Name search filter (partial match)
     if (searchLower && token.name) {
@@ -683,6 +708,7 @@ const cachedFilteredTokens = computed(() => {
     filters.dnaMemetic.length > 0 ||
     filters.dnaArtistSelfPortrait.length > 0 ||
     filters.dnaMOCACollection.length > 0 ||
+    filters.owner.length > 0 ||
     (filters.search && filters.search.trim().length > 0); // Include both ID and name searches
 
   if (!hasFilters) {
@@ -840,10 +866,8 @@ onMounted(() => {
 
   window.addEventListener('resize', handleResize);
 
-  // Activate easter egg (hover mode) after 30 seconds
-  setTimeout(() => {
-    easterEggActive.value = true;
-  }, 30000);
+  // Easter egg activation removed - user must manually enable hover mode
+  // Previously auto-activated after 30 seconds, which was confusing
 
   // Clean up resize listener
   onBeforeUnmount(() => {

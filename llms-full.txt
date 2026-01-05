@@ -1,0 +1,2427 @@
+# MOCA Codex Documentation
+
+> Complete documentation for Large Language Models
+
+
+---
+
+## Document: Query Guide
+
+Complete guide to filtering, sorting, searching, and pagination in the MOCA Codex API
+
+URL: /query-guide
+
+
+# Query Guide
+
+import { Callout } from "zudoku/ui/Callout";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "zudoku/ui/Card";
+
+Master the powerful query capabilities of the MOCA Codex API. This guide covers filtering, sorting, searching, pagination, and field selection using Directus conventions.
+
+---
+
+## Query Parameters Overview
+
+| Parameter | Description | Example |
+|-----------|-------------|---------|
+| `fields` | Select specific fields | `?fields=id,name` |
+| `filter` | Apply filter conditions | `?filter[name][_eq]=Korka` |
+| `sort` | Order results | `?sort=-created_on` |
+| `limit` | Maximum results | `?limit=25` |
+| `offset` | Skip results (pagination) | `?offset=50` |
+| `search` | Full-text search | `?search=curator` |
+| `meta` | Include metadata | `?meta=*` |
+
+---
+
+## Field Selection
+
+Use the `fields` parameter to request only the data you need, reducing response size and improving performance.
+
+### Basic Field Selection
+
+```bash
+GET /items/codex?fields=id,name,description
+```
+
+### Nested Fields
+
+For relational data, use dot notation:
+
+```bash
+GET /items/codex?fields=id,name,related_item.title
+```
+
+### All Fields
+
+Omit the `fields` parameter to get all available fields:
+
+```bash
+GET /items/codex
+```
+
+<Callout type="tip" title="Performance Tip" icon>
+  Always specify only the fields you need. This reduces response size and improves API performance.
+</Callout>
+
+---
+
+## Filtering
+
+Filter results using Directus filter syntax. Filters can be applied using bracket notation or JSON format.
+
+### Filter Syntax
+
+**Bracket Notation:**
+```
+?filter[field][operator]=value
+```
+
+**JSON Format:**
+```
+?filter={"field":{"operator":"value"}}
+```
+
+### Filter Operators
+
+<div className="overflow-x-auto">
+
+| Operator | Description | Example |
+|----------|-------------|---------|
+| `_eq` | Equals | `filter[name][_eq]=Korka` |
+| `_neq` | Not equals | `filter[name][_neq]=Korka` |
+| `_lt` | Less than | `filter[id][_lt]=100` |
+| `_lte` | Less than or equal | `filter[id][_lte]=100` |
+| `_gt` | Greater than | `filter[id][_gt]=50` |
+| `_gte` | Greater than or equal | `filter[id][_gte]=50` |
+| `_in` | In array | `filter[id][_in]=1,2,3` |
+| `_nin` | Not in array | `filter[id][_nin]=1,2,3` |
+| `_null` | Is null | `filter[ancestor][_null]=true` |
+| `_nnull` | Is not null | `filter[ancestor][_nnull]=true` |
+| `_contains` | Contains substring | `filter[name][_contains]=ork` |
+| `_ncontains` | Doesn't contain | `filter[name][_ncontains]=test` |
+| `_starts_with` | Starts with | `filter[name][_starts_with]=Ko` |
+| `_nstarts_with` | Doesn't start with | `filter[name][_nstarts_with]=Ko` |
+| `_ends_with` | Ends with | `filter[name][_ends_with]=ka` |
+| `_nends_with` | Doesn't end with | `filter[name][_nends_with]=ka` |
+| `_between` | Between values | `filter[id][_between]=10,50` |
+| `_nbetween` | Not between | `filter[id][_nbetween]=10,50` |
+| `_empty` | Is empty | `filter[tags][_empty]=true` |
+| `_nempty` | Is not empty | `filter[tags][_nempty]=true` |
+
+</div>
+
+### Filter Examples
+
+**Equals:**
+```bash
+GET /items/codex?filter[name][_eq]=Korka
+```
+
+**Contains:**
+```bash
+GET /items/codex?filter[description][_contains]=curator
+```
+
+**Greater than:**
+```bash
+GET /items/codex?filter[id][_gt]=100
+```
+
+**Not null:**
+```bash
+GET /items/codex?filter[ancestor][_nnull]=true
+```
+
+---
+
+## Logical Operators
+
+Combine multiple conditions using logical operators.
+
+### AND Operator
+
+All conditions must be true:
+
+```bash
+GET /items/codex?filter={"_and":[{"id":{"_gte":1}},{"name":{"_nnull":true}}]}
+```
+
+### OR Operator
+
+At least one condition must be true:
+
+```bash
+GET /items/codex?filter={"_or":[{"name":{"_eq":"Korka"}},{"name":{"_eq":"Aria"}}]}
+```
+
+### Complex Nesting
+
+Combine AND and OR:
+
+```json
+{
+  "_and": [
+    { "owner": { "_eq": "0x614a..." } },
+    {
+      "_or": [
+        { "id": { "_lt": 100 } },
+        { "id": { "_gt": 200 } }
+      ]
+    }
+  ]
+}
+```
+
+<Callout type="note" title="URL Encoding" icon>
+  When using JSON format in URLs, remember to URL-encode the filter parameter or use bracket notation for simpler queries.
+</Callout>
+
+---
+
+## Sorting
+
+Use the `sort` parameter to order results by one or more fields.
+
+### Ascending Order
+
+```bash
+GET /items/codex?sort=name
+```
+
+### Descending Order
+
+Prefix with `-` for descending:
+
+```bash
+GET /items/codex?sort=-timestamp_created
+```
+
+### Multiple Sort Fields
+
+Comma-separate multiple fields:
+
+```bash
+GET /items/codex?sort=-timestamp_created,name
+```
+
+<Callout type="tip" title="Default Sort" icon>
+  If no sort is specified, results are typically sorted by the primary key (id) in ascending order.
+</Callout>
+
+---
+
+## Pagination
+
+Control result set size using `limit` and `offset`.
+
+### Basic Pagination
+
+```bash
+# First page (items 1-10)
+GET /items/codex?limit=10&offset=0
+
+# Second page (items 11-20)
+GET /items/codex?limit=10&offset=10
+
+# Third page (items 21-30)
+GET /items/codex?limit=10&offset=20
+```
+
+### Pagination with Metadata
+
+Include `meta=*` to get total counts for pagination UI:
+
+```bash
+GET /items/codex?limit=10&offset=0&meta=*
+```
+
+Response includes:
+```json
+{
+  "data": [...],
+  "meta": {
+    "filter_count": 42,
+    "total_count": 100
+  }
+}
+```
+
+<Card className="my-4">
+  <CardHeader>
+    <CardTitle>Pagination Calculation</CardTitle>
+  </CardHeader>
+  <CardContent>
+    ```
+    Total Pages = ceil(total_count / limit)
+    Current Page = floor(offset / limit) + 1
+    ```
+  </CardContent>
+</Card>
+
+---
+
+## Full-Text Search
+
+Use the `search` parameter for full-text search across multiple fields.
+
+```bash
+GET /items/codex?search=curator
+```
+
+<Callout type="caution" title="Search Limitations" icon>
+  Search behavior depends on database configuration. Complex searches may benefit from specific field filters instead.
+</Callout>
+
+---
+
+## Metadata
+
+Include the `meta` parameter to get additional information about query results.
+
+### Available Metadata
+
+| Value | Description |
+|-------|-------------|
+| `*` | Include all metadata |
+| `total_count` | Total items in collection |
+| `filter_count` | Items matching current filter |
+
+### Example
+
+```bash
+GET /items/codex?meta=*&limit=10
+```
+
+Response:
+```json
+{
+  "data": [...],
+  "meta": {
+    "filter_count": 42,
+    "total_count": 100
+  }
+}
+```
+
+---
+
+## Combining Parameters
+
+Combine multiple query parameters for precise results:
+
+```bash
+GET /items/codex?fields=id,name,description&filter[ancestor][_nnull]=true&sort=-timestamp_created&limit=10&offset=0&meta=*
+```
+
+This query:
+- Returns only `id`, `name`, and `description` fields
+- Filters for items with non-null ancestors
+- Sorts by creation date (newest first)
+- Returns first 10 results
+- Includes metadata
+
+---
+
+## Best Practices
+
+<div className="grid grid-cols-1 md:grid-cols-2 gap-4 my-6">
+
+<Card>
+  <CardHeader>
+    <CardTitle>✅ Do</CardTitle>
+  </CardHeader>
+  <CardContent>
+    - Use field selection to minimize response size
+    - Include `meta=*` when building pagination UI
+    - Use specific filters instead of fetching all data
+    - Use lowercase for Ethereum addresses
+  </CardContent>
+</Card>
+
+<Card>
+  <CardHeader>
+    <CardTitle>❌ Don't</CardTitle>
+  </CardHeader>
+  <CardContent>
+    - Fetch all fields when you only need a few
+    - Use high limits without pagination
+    - Forget to URL-encode special characters
+    - Use case-sensitive matching for addresses
+  </CardContent>
+</Card>
+
+</div>
+
+---
+
+## Related Resources
+
+- **[Examples](/examples)** - Interactive examples with live playground
+- **[Codex Endpoints](/codex)** - Codex-specific query examples
+- **[Files Endpoints](/files)** - Files-specific query examples
+- **[Directus Documentation](https://docs.directus.io/reference/query.html)** - Complete Directus query reference
+
+
+
+---
+
+## Document: MOCA Codex API
+
+A comprehensive RESTful interface for accessing and managing the MOCA Codex knowledge base
+
+URL: /introduction
+
+
+# MOCA Codex API
+
+import { Callout } from "zudoku/ui/Callout";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "zudoku/ui/Card";
+import { API_BASE_URL } from "../constants";
+
+Welcome to the **MOCA Codex API** — a comprehensive RESTful interface for accessing and managing the MOCA Codex knowledge base. This API provides structured access to curated information about entities, their relationships, and metadata.
+
+<Callout type="note" title="Built on Directus" icon>
+  This API is built on **Directus**, an open-source headless CMS. All filtering, querying, and data operations follow Directus conventions.
+</Callout>
+
+## Key Features
+
+<div className="grid grid-cols-1 md:grid-cols-2 gap-4 mt-6">
+
+<Card>
+  <CardHeader>
+    <CardTitle>📚 Entity Management</CardTitle>
+    <CardDescription>Retrieve and query codex items with rich metadata</CardDescription>
+  </CardHeader>
+  <CardContent>
+    Access curated information about entities including their identity, relationships, attributes, and temporal data.
+  </CardContent>
+</Card>
+
+<Card>
+  <CardHeader>
+    <CardTitle>📁 File Management</CardTitle>
+    <CardDescription>Upload, retrieve, update, and delete files</CardDescription>
+  </CardHeader>
+  <CardContent>
+    Comprehensive file operations with full metadata support including dimensions, IPTC, and Exif data.
+  </CardContent>
+</Card>
+
+<Card>
+  <CardHeader>
+    <CardTitle>🖼️ Asset Retrieval</CardTitle>
+    <CardDescription>Access file content with image transformations</CardDescription>
+  </CardHeader>
+  <CardContent>
+    Get file content with optional image transformations including resizing, cropping, format conversion, and more.
+  </CardContent>
+</Card>
+
+<Card>
+  <CardHeader>
+    <CardTitle>🔍 Flexible Filtering</CardTitle>
+    <CardDescription>Advanced query capabilities</CardDescription>
+  </CardHeader>
+  <CardContent>
+    Powerful filtering, sorting, and search using Directus filter syntax with full-text search support.
+  </CardContent>
+</Card>
+
+</div>
+
+## API Overview
+
+| Feature | Description |
+|---------|-------------|
+| **RESTful Design** | Standard HTTP methods and status codes |
+| **JSON Responses** | Consistent structured responses with metadata |
+| **Pagination** | Built-in support for paginated results |
+| **Field Selection** | Specify which fields to include in responses |
+
+## Base URL
+
+<pre><code>{API_BASE_URL}</code></pre>
+
+<Callout type="tip" title="Getting Started" icon>
+  Ready to start using the API? Check out the [Getting Started](/getting-started) guide for a quick introduction, or jump straight to the [API Reference](/api) for detailed endpoint documentation.
+</Callout>
+
+## Need Help?
+
+- **[Getting Started](/getting-started)** - Quick start guide for your first API calls
+- **[Query Guide](/query-guide)** - Learn about filtering, sorting, and pagination
+- **[Examples](/examples)** - Interactive examples with live playground
+- **[API Reference](/api)** - Complete endpoint documentation
+
+For detailed information on Directus query syntax and advanced features, see the [Directus API Documentation](https://docs.directus.io/reference/query.html).
+
+
+
+---
+
+## Document: Getting Started
+
+Quick start guide for the MOCA Codex API
+
+URL: /getting-started
+
+
+# Getting Started
+
+import { Callout } from "zudoku/ui/Callout";
+import { Stepper } from "zudoku/ui/Stepper";
+import { API_BASE_URL } from "../constants";
+
+Get up and running with the MOCA Codex API in just a few minutes. This guide will walk you through your first API calls.
+
+## Prerequisites
+
+Before you begin, ensure you have:
+
+- Access to the MOCA Codex API server
+- A tool for making HTTP requests (like `curl`, Postman, or your favorite HTTP client)
+
+## Quick Start
+
+<Stepper>
+
+1. **Verify API Access**
+
+   First, let's verify you can reach the API server. The base URL is:
+
+   <pre><code>{API_BASE_URL}</code></pre>
+
+1. **Fetch Your First Codex Items**
+
+   Let's retrieve a list of codex items. This is the simplest API call you can make:
+
+   <pre><code className="language-bash">{`curl "${API_BASE_URL}/items/codex"`}</code></pre>
+
+   You should receive a JSON response with an array of codex items:
+
+   ```json
+   {
+     "data": [
+       {
+         "id": 1,
+         "name": "Korka",
+         "ancestor": "Slovenian king",
+         "description": "A contemplative curator..."
+       }
+     ]
+   }
+   ```
+
+1. **Get a Specific Item**
+
+   To retrieve a single codex item by ID:
+
+   <pre><code className="language-bash">{`curl "${API_BASE_URL}/items/codex/1"`}</code></pre>
+
+1. **Apply Filters**
+
+   Filter results using Directus filter syntax:
+
+   <pre><code className="language-bash">{`curl "${API_BASE_URL}/items/codex?filter[name][_contains]=Korka"`}</code></pre>
+
+1. **Select Specific Fields**
+
+   Request only the fields you need:
+
+   <pre><code className="language-bash">{`curl "${API_BASE_URL}/items/codex?fields=id,name,description"`}</code></pre>
+
+</Stepper>
+
+## Response Structure
+
+All successful responses follow a consistent structure:
+
+```json
+{
+  "data": [...],   // The requested data
+  "meta": {        // Optional metadata (when requested)
+    "filter_count": 10,
+    "total_count": 100
+  }
+}
+```
+
+<Callout type="tip" title="Include Metadata" icon>
+  Add `?meta=*` to your requests to include useful metadata like total counts and filter counts.
+</Callout>
+
+## Error Handling
+
+When an error occurs, the API returns an error object:
+
+```json
+{
+  "errors": [
+    {
+      "message": "Item not found",
+      "extensions": {
+        "code": "NOT_FOUND"
+      }
+    }
+  ]
+}
+```
+
+<Callout type="caution" title="Common Errors" icon>
+  - **404 Not Found**: The requested resource doesn't exist
+  - **400 Bad Request**: Invalid query parameters or filter syntax
+  - **403 Forbidden**: Access denied (if authentication is required)
+</Callout>
+
+## What's Next?
+
+Now that you've made your first API calls, explore these resources:
+
+- **[Query Guide](/query-guide)** - Master filtering, sorting, and pagination
+- **[Codex Endpoints](/codex)** - Deep dive into codex item operations
+- **[Files Endpoints](/files)** - Learn about file and asset management
+- **[Examples](/examples)** - Interactive examples with live playground
+- **[API Reference](/api)** - Complete endpoint documentation
+
+<Callout type="note" title="Need More Help?" icon>
+  For comprehensive documentation on Directus query syntax, visit the [Directus API Documentation](https://docs.directus.io/reference/query.html).
+</Callout>
+
+
+
+---
+
+## Document: Files Endpoints
+
+API endpoints for retrieving files and assets from the MOCA Codex
+
+URL: /files
+
+
+# Files Endpoints
+
+import { Callout } from "zudoku/ui/Callout";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "zudoku/ui/Card";
+import { API_BASE_URL } from "../constants";
+
+The Files API provides read-only access to files and assets stored in Directus. Use these endpoints to access and display media assets, documents, and other file types.
+
+## Overview
+
+<div className="grid grid-cols-1 md:grid-cols-2 gap-4 my-6">
+
+<Card>
+  <CardHeader>
+    <CardTitle>📋 File Retrieval</CardTitle>
+  </CardHeader>
+  <CardContent>
+    List and retrieve file metadata including dimensions, file size, and type.
+  </CardContent>
+</Card>
+
+<Card>
+  <CardHeader>
+    <CardTitle>📊 Metadata Access</CardTitle>
+  </CardHeader>
+  <CardContent>
+    Access extracted metadata including Exif, IPTC, and ICC data.
+  </CardContent>
+</Card>
+
+<Card>
+  <CardHeader>
+    <CardTitle>🖼️ Asset Retrieval</CardTitle>
+  </CardHeader>
+  <CardContent>
+    Get file content with optional image transformations.
+  </CardContent>
+</Card>
+
+<Card>
+  <CardHeader>
+    <CardTitle>🏷️ Organization</CardTitle>
+  </CardHeader>
+  <CardContent>
+    View file organization including folders, tags, and descriptions.
+  </CardContent>
+</Card>
+
+</div>
+
+---
+
+## Endpoints
+
+### List Files
+
+```
+GET /files
+```
+
+Retrieve a paginated list of all files stored in Directus.
+
+#### Query Parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `fields` | string | Comma-separated list of fields to include |
+| `limit` | integer | Maximum number of items to return |
+| `offset` | integer | Number of items to skip for pagination |
+| `sort` | string | Field(s) to sort by (prefix with `-` for descending) |
+| `filter` | object | Filter criteria using Directus syntax |
+| `search` | string | Full-text search across file metadata |
+| `meta` | string | Metadata to include |
+
+#### Example Request
+
+<pre><code className="language-bash">{`curl "${API_BASE_URL}/files?limit=10&fields=id,title,type,filesize"`}</code></pre>
+
+#### Example Response
+
+```json
+{
+  "data": [
+    {
+      "id": "a1b2c3d4-e5f6-7890-1234-abcdef123456",
+      "storage": "local",
+      "filename_disk": "image-1234567890.jpg",
+      "filename_download": "profile-photo.jpg",
+      "title": "Profile Photo",
+      "type": "image/jpeg",
+      "filesize": 245678,
+      "width": 1920,
+      "height": 1080
+    }
+  ],
+  "meta": {
+    "filter_count": 1,
+    "total_count": 1
+  }
+}
+```
+
+---
+
+### Get File by ID
+
+```
+GET /files/{id}
+```
+
+Retrieve a single file's metadata by its unique identifier.
+
+#### Path Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `id` | string (UUID) | Yes | The unique identifier of the file |
+
+#### Example Request
+
+<pre><code className="language-bash">{`curl "${API_BASE_URL}/files/a1b2c3d4-e5f6-7890-1234-abcdef123456"`}</code></pre>
+
+#### Example Response
+
+```json
+{
+  "data": {
+    "id": "a1b2c3d4-e5f6-7890-1234-abcdef123456",
+    "storage": "local",
+    "filename_disk": "image-1234567890.jpg",
+    "filename_download": "profile-photo.jpg",
+    "title": "Profile Photo",
+    "type": "image/jpeg",
+    "folder": null,
+    "uploaded_by": "admin-user-id",
+    "created_on": "2025-01-15T10:30:00Z",
+    "filesize": 245678,
+    "width": 1920,
+    "height": 1080,
+    "description": "User profile photo",
+    "tags": [],
+    "metadata": {
+      "exif": {
+        "Make": "Canon",
+        "Model": "EOS 5D Mark IV"
+      }
+    }
+  }
+}
+```
+
+---
+
+### Get Asset
+
+```
+GET /assets/{id}
+```
+
+Retrieve the actual file content (asset) by its unique identifier. This endpoint returns the raw file data.
+
+<Callout type="tip" title="Use for Displaying Content" icon>
+  This is the endpoint to use when displaying images, serving documents, or streaming media files in your application.
+</Callout>
+
+#### Path Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `id` | string (UUID) | Yes | The unique identifier of the file |
+
+#### Image Transformation Parameters
+
+For image files, you can apply transformations:
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `width` | integer | Desired width in pixels |
+| `height` | integer | Desired height in pixels |
+| `quality` | integer | Compression quality (0-100) |
+| `fit` | string | How image fits dimensions: `cover`, `contain`, `inside`, `outside` |
+| `format` | string | Output format: `jpeg`, `png`, `webp`, `tiff`, `avif` |
+| `key` | string | Preset transformation key |
+| `transforms` | string | JSON array of Sharp API transformations |
+
+#### Transformation Presets
+
+Pre-configured presets for quick resizing:
+
+| Preset | Description |
+|--------|-------------|
+| `s128` | Resize to 128px width |
+| `s256` | Resize to 256px width |
+| `s512` | Resize to 512px width |
+| `s1024` | Resize to 1024px width |
+
+#### Example: Basic Asset Request
+
+<pre><code className="language-bash">{`curl "${API_BASE_URL}/assets/a1b2c3d4-e5f6-7890-1234-abcdef123456"`}</code></pre>
+
+#### Example: Resize with Preset
+
+<pre><code className="language-bash">{`curl "${API_BASE_URL}/assets/a1b2c3d4-e5f6-7890-1234-abcdef123456?key=s512"`}</code></pre>
+
+#### Example: Custom Transformation
+
+<pre><code className="language-bash">{`curl "${API_BASE_URL}/assets/a1b2c3d4-e5f6-7890-1234-abcdef123456?width=800&height=600&fit=cover&format=webp&quality=80"`}</code></pre>
+
+#### Example: Sharp Transformations
+
+<pre><code className="language-bash">{`curl "${API_BASE_URL}/assets/a1b2c3d4-e5f6-7890-1234-abcdef123456?transforms=[[\"rotate\",90],[\"blur\",10]]"`}</code></pre>
+
+<Callout type="note" title="Sharp API" icon>
+  The `transforms` parameter accepts Sharp API operations like `rotate`, `resize`, `blur`, `sharpen`, `tint`, `greyscale`, `negate`, and `normalize`. See the [Sharp documentation](https://sharp.pixelplumbing.com/) for all available options.
+</Callout>
+
+---
+
+## File Schema
+
+Each file object contains the following fields:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | string (UUID) | Unique identifier |
+| `storage` | string | Storage location identifier |
+| `filename_disk` | string | Name of the file on disk |
+| `filename_download` | string | Name used when downloading |
+| `title` | string | User-defined title |
+| `type` | string | MIME type |
+| `folder` | string | Folder identifier |
+| `uploaded_by` | string | User who uploaded the file |
+| `created_on` | datetime | Upload timestamp |
+| `filesize` | integer | File size in bytes |
+| `width` | integer | Image width in pixels |
+| `height` | integer | Image height in pixels |
+| `duration` | integer | Duration for audio/video in seconds |
+| `description` | string | File description |
+| `location` | string | Geographic location |
+| `tags` | array | Array of tags |
+| `metadata` | object | Extracted metadata (Exif, IPTC, ICC) |
+| `focal_point_x` | number | Focal point X coordinate |
+| `focal_point_y` | number | Focal point Y coordinate |
+
+---
+
+## Filtering Examples
+
+### Filter by Type
+
+<pre><code className="language-bash">{`curl "${API_BASE_URL}/files?filter[type][_starts_with]=image/"`}</code></pre>
+
+### Filter by Upload Date
+
+<pre><code className="language-bash">{`curl "${API_BASE_URL}/files?filter[created_on][_gte]=2025-01-01&sort=-created_on"`}</code></pre>
+
+### Search Files
+
+<pre><code className="language-bash">{`curl "${API_BASE_URL}/files?search=profile"`}</code></pre>
+
+---
+
+## Related Resources
+
+- **[Query Guide](/query-guide)** - Complete guide to filtering, sorting, and pagination
+- **[Examples](/examples)** - Interactive examples with live playground
+- **[API Reference](/api)** - Full OpenAPI documentation
+
+
+
+---
+
+## Document: Codex Endpoints
+
+API endpoints for accessing and querying the MOCA Codex knowledge base
+
+URL: /codex
+
+
+# Codex Endpoints
+
+import { Callout } from "zudoku/ui/Callout";
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "zudoku/ui/Card";
+import { API_BASE_URL } from "../constants";
+
+The Codex API provides operations for accessing and querying the **MOCA Codex** knowledge base. The Codex contains curated information about entities, including their identity, relationships, attributes, and temporal data.
+
+## Overview
+
+<div className="grid grid-cols-1 md:grid-cols-2 gap-4 my-6">
+
+<Card>
+  <CardHeader>
+    <CardTitle>🪪 Identity</CardTitle>
+  </CardHeader>
+  <CardContent>
+    Names, descriptions, and biographical information for each entity.
+  </CardContent>
+</Card>
+
+<Card>
+  <CardHeader>
+    <CardTitle>🔗 Relationships</CardTitle>
+  </CardHeader>
+  <CardContent>
+    Ancestral connections and associations between entities.
+  </CardContent>
+</Card>
+
+<Card>
+  <CardHeader>
+    <CardTitle>✨ Attributes</CardTitle>
+  </CardHeader>
+  <CardContent>
+    Characteristics, preferences, and metadata for entities.
+  </CardContent>
+</Card>
+
+<Card>
+  <CardHeader>
+    <CardTitle>⏰ Temporal Data</CardTitle>
+  </CardHeader>
+  <CardContent>
+    Creation timestamps and historical context.
+  </CardContent>
+</Card>
+
+</div>
+
+## Endpoints
+
+### List Codex Items
+
+```
+GET /items/codex
+```
+
+Retrieve a paginated list of all codex items. This endpoint supports advanced querying capabilities.
+
+#### Query Parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `fields` | string | Comma-separated list of fields to include |
+| `limit` | integer | Maximum number of items to return |
+| `offset` | integer | Number of items to skip for pagination |
+| `sort` | string | Field(s) to sort by (prefix with `-` for descending) |
+| `filter` | object | Filter criteria using Directus syntax |
+| `search` | string | Full-text search query |
+| `meta` | string | Metadata to include (`*`, `filter_count`, `total_count`) |
+
+#### Example Request
+
+<pre><code className="language-bash">{`curl "${API_BASE_URL}/items/codex?fields=id,name,description&limit=10&meta=*"`}</code></pre>
+
+#### Example Response
+
+```json
+{
+  "data": [
+    {
+      "id": 1,
+      "name": "Korka",
+      "description": "A contemplative curator with deep roots in Eastern Orthodox hesychasm"
+    },
+    {
+      "id": 2,
+      "name": "Aria",
+      "description": "An artist exploring digital boundaries"
+    }
+  ],
+  "meta": {
+    "filter_count": 2,
+    "total_count": 2
+  }
+}
+```
+
+---
+
+### Get Codex Item by ID
+
+```
+GET /items/codex/{id}
+```
+
+Retrieve a single codex item by its unique identifier.
+
+#### Path Parameters
+
+| Parameter | Type | Required | Description |
+|-----------|------|----------|-------------|
+| `id` | integer | Yes | The unique identifier of the codex item |
+
+#### Query Parameters
+
+| Parameter | Type | Description |
+|-----------|------|-------------|
+| `fields` | string | Comma-separated list of fields to include |
+| `meta` | string | Metadata to include |
+
+#### Example Request
+
+<pre><code className="language-bash">{`curl "${API_BASE_URL}/items/codex/1"`}</code></pre>
+
+#### Example Response
+
+```json
+{
+  "data": {
+    "id": 1,
+    "name": "Korka",
+    "ancestor": "Slovenian king",
+    "description": "A contemplative curator with deep roots in Eastern Orthodox hesychasm, interpreting inner stillness as deeper attention to the world's beautiful chaos.",
+    "artstyle_disliked": "overly commercial",
+    "timestamp_created": "2025-01-15T10:30:00Z",
+    "biography": "Her psychology is built on Eastern Orthodox hesychasm...",
+    "whatness": ["curator", "philosopher", "guardian"]
+  }
+}
+```
+
+<Callout type="caution" title="Error: Not Found" icon>
+  If the requested ID doesn't exist, the API returns a `404 Not Found` error:
+  
+  ```json
+  {
+    "errors": [
+      {
+        "message": "Item not found",
+        "extensions": { "code": "NOT_FOUND" }
+      }
+    ]
+  }
+  ```
+</Callout>
+
+---
+
+## Codex Item Schema
+
+Each codex item contains the following fields:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `id` | integer | Unique incremental identifier |
+| `name` | string | Entity name |
+| `ancestor` | string | Ancestral or origin information |
+| `description` | string | Brief description |
+| `biography` | string | Detailed biographical information |
+| `whatness` | array | Array of characteristics or roles |
+| `artstyle_disliked` | string | Art styles the entity dislikes |
+| `owner` | string | Ethereum wallet address of the owner |
+| `timestamp_created` | datetime | Creation timestamp |
+
+---
+
+## Filtering Examples
+
+### Filter by Name
+
+<pre><code className="language-bash">{`curl "${API_BASE_URL}/items/codex?filter[name][_contains]=Korka"`}</code></pre>
+
+### Filter by Owner Address
+
+<Callout type="note" title="Important: Lowercase Addresses" icon>
+  Owner addresses **must be lowercase**. Ethereum addresses are case-insensitive on the blockchain, but Directus requires lowercase for consistent querying.
+</Callout>
+
+<pre><code className="language-bash">{`curl "${API_BASE_URL}/items/codex?filter[owner][_eq]=0x614a61a3b7f2fd8750acaad63b2a0cfe8b8524f1"`}</code></pre>
+
+### Complex Filters
+
+Combine multiple conditions:
+
+<pre><code className="language-bash">{`curl "${API_BASE_URL}/items/codex?filter={\"_and\":[{\"owner\":{\"_eq\":\"0x614a61a3b7f2fd8750acaad63b2a0cfe8b8524f1\"}},{\"id\":{\"_gte\":100}}]}"`}</code></pre>
+
+---
+
+## Related Resources
+
+- **[Query Guide](/query-guide)** - Complete guide to filtering, sorting, and pagination
+- **[Examples](/examples)** - Interactive examples with live playground
+- **[API Reference](/api)** - Full OpenAPI documentation
+
+
+
+---
+
+## Document: Examples
+
+Interactive examples demonstrating common query patterns for the MOCA Codex API
+
+URL: /examples/introduction
+
+
+# Examples
+
+import { Card, CardHeader, CardTitle, CardDescription, CardContent } from "zudoku/ui/Card";
+
+Practical, interactive examples demonstrating common query patterns and use cases for the MOCA Codex API. Use the **Open in Playground** buttons to test queries directly against the API.
+
+<Callout type="tip" title="Interactive Testing" icon>
+  Click the **Open in Playground** buttons to launch an interactive API playground where you can modify parameters, execute requests, and inspect responses in real-time.
+</Callout>
+
+## Example Categories
+
+<div className="grid grid-cols-1 md:grid-cols-2 gap-4 my-6">
+
+<Card>
+  <CardHeader>
+    <CardTitle>📚 Codex Examples</CardTitle>
+    <CardDescription>Query the MOCA Codex knowledge base</CardDescription>
+  </CardHeader>
+  <CardContent>
+    Learn to query codex items by owner, filter by name, paginate results, sort, and perform full-text search across entities.
+    
+    [View Codex Examples →](/examples/codex/list-items)
+  </CardContent>
+</Card>
+
+<Card>
+  <CardHeader>
+    <CardTitle>📁 Files Examples</CardTitle>
+    <CardDescription>Access and filter stored files</CardDescription>
+  </CardHeader>
+  <CardContent>
+    List files, filter by type (images, documents), retrieve metadata, and query recent uploads with sorting.
+    
+    [View Files Examples →](/examples/files/list-files)
+  </CardContent>
+</Card>
+
+<Card>
+  <CardHeader>
+    <CardTitle>🖼️ Assets Examples</CardTitle>
+    <CardDescription>Image transformations and presets</CardDescription>
+  </CardHeader>
+  <CardContent>
+    Use preset transformations, apply custom width/height/format options, and leverage Sharp API for advanced image processing.
+    
+    [View Assets Examples →](/examples/assets/presets)
+  </CardContent>
+</Card>
+
+<Card>
+  <CardHeader>
+    <CardTitle>🔧 Advanced Examples</CardTitle>
+    <CardDescription>Complex filters and logical operators</CardDescription>
+  </CardHeader>
+  <CardContent>
+    Combine filters with AND/OR operators, exclude null values, and build sophisticated queries for precise data retrieval.
+    
+    [View Advanced Examples →](/examples/advanced/complex-filters)
+  </CardContent>
+</Card>
+
+</div>
+
+## Quick Reference
+
+### Common Codex Queries
+
+| Use Case | Example |
+|----------|---------|
+| List items | `GET /items/codex?fields=id,name&limit=10` |
+| Get by ID | `GET /items/codex/1` |
+| Filter by owner | `GET /items/codex?filter[owner][_eq]=0x...` |
+| Search | `GET /items/codex?search=curator` |
+| Sort by date | `GET /items/codex?sort=-timestamp_created` |
+| Paginate | `GET /items/codex?limit=10&offset=20&meta=*` |
+
+### Common File Queries
+
+| Use Case | Example |
+|----------|---------|
+| List files | `GET /files?fields=id,title,type&limit=10` |
+| Images only | `GET /files?filter[type][_starts_with]=image/` |
+| Recent uploads | `GET /files?sort=-created_on&limit=5` |
+| Get metadata | `GET /files/{uuid}` |
+
+### Asset Transformations
+
+| Use Case | Example |
+|----------|---------|
+| Preset resize | `GET /assets/{id}?key=s512` |
+| Custom size | `GET /assets/{id}?width=800&height=600` |
+| Format conversion | `GET /assets/{id}?format=webp&quality=80` |
+| Rotate image | `GET /assets/{id}?transforms=[["rotate",90]]` |
+
+## Filter Operators
+
+The API uses Directus filter syntax. Here are the most common operators:
+
+| Operator | Description | Example |
+|----------|-------------|---------|
+| `_eq` | Equals | `filter[name][_eq]=Korka` |
+| `_neq` | Not equals | `filter[status][_neq]=draft` |
+| `_contains` | Contains substring | `filter[name][_contains]=art` |
+| `_starts_with` | Starts with | `filter[type][_starts_with]=image/` |
+| `_gte` | Greater than or equal | `filter[id][_gte]=100` |
+| `_lte` | Less than or equal | `filter[id][_lte]=50` |
+| `_null` | Is null | `filter[ancestor][_null]=true` |
+| `_nnull` | Is not null | `filter[owner][_nnull]=true` |
+
+<Callout type="note" title="Bracket vs JSON Syntax" icon>
+  Use **bracket notation** for simple filters: `filter[name][_eq]=value`
+  
+  Use **JSON syntax** for complex logic with `_and`/`_or`: `filter={"_and":[...]}`
+</Callout>
+
+## About the API
+
+The MOCA Codex API is built on **Directus**, providing a powerful and flexible interface for accessing:
+
+- **Codex Items**: Curated entities with identity, relationships, attributes, and temporal data
+- **Files**: Stored media with rich metadata including Exif, IPTC, and dimensions
+- **Assets**: File content with on-the-fly image transformations
+
+<Callout type="caution" title="Address Format" icon>
+  When filtering by Ethereum wallet addresses (e.g., `owner` field), always use **lowercase**. The blockchain is case-insensitive, but Directus requires lowercase for consistent matching.
+</Callout>
+
+## Next Steps
+
+- **[Query by Owner](/examples/codex/items-by-owner)** — Start with a common use case
+- **[Query Guide](/query-guide)** — Deep dive into filtering and sorting
+- **[API Reference](/api)** — Complete OpenAPI documentation
+
+
+
+---
+
+## Document: Recent Files
+
+Get the most recently uploaded files
+
+URL: /examples/files/recent-files
+
+
+# Recent Files
+
+import { API_BASE_URL } from "../../../constants";
+
+Get the most recently uploaded files by sorting on the `created_on` field in descending order.
+
+<OpenPlaygroundButton
+  server={API_BASE_URL}
+  url="/files"
+  method="GET"
+  queryParams={[
+    { name: "sort", defaultValue: "-created_on" },
+    { name: "limit", defaultValue: "5" },
+    { name: "fields", defaultValue: "id,title,created_on,type" }
+  ]}
+/>
+
+```bash
+GET /files?sort=-created_on&limit=5&fields=id,title,created_on,type
+```
+
+## Recently Modified Files
+
+Get files that were recently modified:
+
+<OpenPlaygroundButton
+  server={API_BASE_URL}
+  url="/files"
+  method="GET"
+  queryParams={[
+    { name: "sort", defaultValue: "-modified_on" },
+    { name: "limit", defaultValue: "5" },
+    { name: "fields", defaultValue: "id,title,modified_on,type" }
+  ]}
+/>
+
+```bash
+GET /files?sort=-modified_on&limit=5&fields=id,title,modified_on,type
+```
+
+## Filter by Date Range
+
+Get files uploaded after a specific date:
+
+<OpenPlaygroundButton
+  server={API_BASE_URL}
+  url="/files"
+  method="GET"
+  queryParams={[
+    { name: "filter[created_on][_gte]", defaultValue: "2024-01-01" },
+    { name: "sort", defaultValue: "-created_on" },
+    { name: "fields", defaultValue: "id,title,created_on" },
+    { name: "limit", defaultValue: "10" }
+  ]}
+/>
+
+```bash
+GET /files?filter[created_on][_gte]=2024-01-01&sort=-created_on&fields=id,title,created_on&limit=10
+```
+
+<Callout type="tip" title="Date Format" icon>
+  Dates can be specified in ISO 8601 format: `YYYY-MM-DD` or `YYYY-MM-DDTHH:MM:SSZ`
+</Callout>
+
+
+
+---
+
+## Document: List Files
+
+Retrieve a list of files with basic metadata
+
+URL: /examples/files/list-files
+
+
+# List Files
+
+import { API_BASE_URL } from "../../../constants";
+
+Retrieve a list of files with basic metadata such as title, type, and filesize.
+
+<OpenPlaygroundButton
+  server={API_BASE_URL}
+  url="/files"
+  method="GET"
+  queryParams={[
+    { name: "fields", defaultValue: "id,title,type,filesize" },
+    { name: "limit", defaultValue: "10" }
+  ]}
+/>
+
+```bash
+GET /files?fields=id,title,type,filesize&limit=10
+```
+
+## Available File Fields
+
+| Field | Description |
+|-------|-------------|
+| `id` | Unique file identifier (UUID) |
+| `title` | File title |
+| `filename_download` | Original filename |
+| `type` | MIME type (e.g., `image/jpeg`) |
+| `filesize` | Size in bytes |
+| `width` | Image width (images only) |
+| `height` | Image height (images only) |
+| `created_on` | Upload timestamp |
+| `modified_on` | Last modification timestamp |
+
+<Callout type="tip" title="File Size Formatting" icon>
+  The `filesize` field returns bytes. Divide by 1024 for KB, or by 1048576 for MB.
+</Callout>
+
+
+
+---
+
+## Document: Get File Metadata
+
+Retrieve detailed metadata for a specific file
+
+URL: /examples/files/get-metadata
+
+
+# Get File Metadata
+
+import { API_BASE_URL } from "../../../constants";
+
+Retrieve detailed metadata for a specific file by its UUID.
+
+<OpenPlaygroundButton
+  server={API_BASE_URL}
+  url="/files/{id}"
+  method="GET"
+  pathParams={[
+    { name: "id", defaultValue: "a1b2c3d4-e5f6-7890-1234-abcdef123456" }
+  ]}
+/>
+
+```bash
+GET /files/a1b2c3d4-e5f6-7890-1234-abcdef123456
+```
+
+<Callout type="note" title="File IDs" icon>
+  File IDs are UUIDs in the format `xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx`. You can find file IDs by listing files or from relational fields in codex items.
+</Callout>
+
+## Response Structure
+
+A file metadata response includes:
+
+```json
+{
+  "data": {
+    "id": "a1b2c3d4-e5f6-7890-1234-abcdef123456",
+    "storage": "local",
+    "filename_disk": "a1b2c3d4-e5f6-7890-1234-abcdef123456.jpg",
+    "filename_download": "original-name.jpg",
+    "title": "My Image",
+    "type": "image/jpeg",
+    "filesize": 1234567,
+    "width": 1920,
+    "height": 1080,
+    "created_on": "2024-01-15T10:30:00Z",
+    "modified_on": "2024-01-15T10:30:00Z"
+  }
+}
+```
+
+## With Selected Fields
+
+Request only specific metadata fields:
+
+<OpenPlaygroundButton
+  server={API_BASE_URL}
+  url="/files/{id}"
+  method="GET"
+  pathParams={[
+    { name: "id", defaultValue: "a1b2c3d4-e5f6-7890-1234-abcdef123456" }
+  ]}
+  queryParams={[
+    { name: "fields", defaultValue: "id,title,type,width,height,filesize" }
+  ]}
+/>
+
+```bash
+GET /files/a1b2c3d4-e5f6-7890-1234-abcdef123456?fields=id,title,type,width,height,filesize
+```
+
+
+
+---
+
+## Document: Filter Images
+
+Get only image files from the collection
+
+URL: /examples/files/filter-images
+
+
+# Filter Images
+
+import { API_BASE_URL } from "../../../constants";
+
+Filter files to return only images using the `_starts_with` operator on the MIME type.
+
+<OpenPlaygroundButton
+  server={API_BASE_URL}
+  url="/files"
+  method="GET"
+  queryParams={[
+    { name: "filter[type][_starts_with]", defaultValue: "image/" },
+    { name: "fields", defaultValue: "id,title,type,width,height" }
+  ]}
+/>
+
+```bash
+GET /files?filter[type][_starts_with]=image/&fields=id,title,type,width,height
+```
+
+## Filter by Specific Image Type
+
+Get only JPEG images:
+
+<OpenPlaygroundButton
+  server={API_BASE_URL}
+  url="/files"
+  method="GET"
+  queryParams={[
+    { name: "filter[type][_eq]", defaultValue: "image/jpeg" },
+    { name: "fields", defaultValue: "id,title,type,width,height" }
+  ]}
+/>
+
+```bash
+GET /files?filter[type][_eq]=image/jpeg&fields=id,title,type,width,height
+```
+
+## Common MIME Types
+
+| Type | MIME |
+|------|------|
+| JPEG | `image/jpeg` |
+| PNG | `image/png` |
+| WebP | `image/webp` |
+| GIF | `image/gif` |
+| SVG | `image/svg+xml` |
+| PDF | `application/pdf` |
+| JSON | `application/json` |
+
+<Callout type="info" title="Videos & Other Media" icon>
+  Use `video/` prefix for videos, `audio/` for audio files, and `application/` for documents.
+</Callout>
+
+
+
+---
+
+## Document: Sorting
+
+Sort codex items by various fields
+
+URL: /examples/codex/sorting
+
+
+# Sorting
+
+import { API_BASE_URL } from "../../../constants";
+
+Sort results using the `sort` parameter. Prefix with `-` for descending order.
+
+## Recent Items First
+
+Get the most recently created codex items:
+
+<OpenPlaygroundButton
+  server={API_BASE_URL}
+  url="/items/codex"
+  method="GET"
+  queryParams={[
+    { name: "sort", defaultValue: "-timestamp_created" },
+    { name: "limit", defaultValue: "10" },
+    { name: "fields", defaultValue: "id,name,timestamp_created" }
+  ]}
+/>
+
+```bash
+GET /items/codex?sort=-timestamp_created&limit=10&fields=id,name,timestamp_created
+```
+
+## Sort Direction
+
+| Prefix | Direction | Example |
+|--------|-----------|---------|
+| (none) | Ascending (A-Z, 0-9, oldest first) | `sort=name` |
+| `-` | Descending (Z-A, 9-0, newest first) | `sort=-name` |
+
+## Multiple Sort Fields
+
+Sort by multiple fields by separating them with commas:
+
+<OpenPlaygroundButton
+  server={API_BASE_URL}
+  url="/items/codex"
+  method="GET"
+  queryParams={[
+    { name: "sort", defaultValue: "-timestamp_created,name" },
+    { name: "limit", defaultValue: "10" },
+    { name: "fields", defaultValue: "id,name,timestamp_created" }
+  ]}
+/>
+
+```bash
+GET /items/codex?sort=-timestamp_created,name&limit=10
+```
+
+<Callout type="tip" title="Sort Order Priority" icon>
+  Fields are sorted in the order specified. In the example above, items are first sorted by creation date (newest first), then alphabetically by name for items with the same creation date.
+</Callout>
+
+## Sort Alphabetically
+
+Sort items by name in alphabetical order:
+
+<OpenPlaygroundButton
+  server={API_BASE_URL}
+  url="/items/codex"
+  method="GET"
+  queryParams={[
+    { name: "sort", defaultValue: "name" },
+    { name: "limit", defaultValue: "10" },
+    { name: "fields", defaultValue: "id,name" }
+  ]}
+/>
+
+```bash
+GET /items/codex?sort=name&limit=10&fields=id,name
+```
+
+
+
+---
+
+## Document: Full-Text Search
+
+Search across all codex fields
+
+URL: /examples/codex/search
+
+
+# Full-Text Search
+
+import { API_BASE_URL } from "../../../constants";
+
+Use the `search` parameter to perform full-text search across all searchable fields in the codex collection.
+
+<OpenPlaygroundButton
+  server={API_BASE_URL}
+  url="/items/codex"
+  method="GET"
+  queryParams={[
+    { name: "search", defaultValue: "curator" },
+    { name: "fields", defaultValue: "id,name,description" }
+  ]}
+/>
+
+```bash
+GET /items/codex?search=curator&fields=id,name,description
+```
+
+<Callout type="info" title="Search vs Filter" icon>
+  - **Search**: Matches across multiple text fields simultaneously
+  - **Filter**: Targets specific fields with precise operators
+
+  Use search for discovery, filters for precise queries.
+</Callout>
+
+## Combine Search with Filters
+
+You can combine full-text search with filters for more refined results:
+
+<OpenPlaygroundButton
+  server={API_BASE_URL}
+  url="/items/codex"
+  method="GET"
+  queryParams={[
+    { name: "search", defaultValue: "art" },
+    { name: "filter[id][_gte]", defaultValue: "10" },
+    { name: "fields", defaultValue: "id,name,description" },
+    { name: "limit", defaultValue: "10" }
+  ]}
+/>
+
+```bash
+GET /items/codex?search=art&filter[id][_gte]=10&fields=id,name,description&limit=10
+```
+
+## Search with Sorting
+
+Sort search results by relevance or other fields:
+
+<OpenPlaygroundButton
+  server={API_BASE_URL}
+  url="/items/codex"
+  method="GET"
+  queryParams={[
+    { name: "search", defaultValue: "collection" },
+    { name: "sort", defaultValue: "-timestamp_created" },
+    { name: "fields", defaultValue: "id,name,description,timestamp_created" },
+    { name: "limit", defaultValue: "10" }
+  ]}
+/>
+
+```bash
+GET /items/codex?search=collection&sort=-timestamp_created&fields=id,name,description,timestamp_created&limit=10
+```
+
+
+
+---
+
+## Document: Pagination
+
+Retrieve paginated results with total counts
+
+URL: /examples/codex/pagination
+
+
+# Pagination
+
+import { API_BASE_URL } from "../../../constants";
+
+Retrieve paginated results using `limit` and `offset` parameters. Include `meta=*` to get total counts for building pagination UI.
+
+<OpenPlaygroundButton
+  server={API_BASE_URL}
+  url="/items/codex"
+  method="GET"
+  queryParams={[
+    { name: "limit", defaultValue: "5" },
+    { name: "offset", defaultValue: "0" },
+    { name: "meta", defaultValue: "*" },
+    { name: "fields", defaultValue: "id,name" }
+  ]}
+/>
+
+```bash
+GET /items/codex?limit=5&offset=0&meta=*&fields=id,name
+```
+
+## Pagination Parameters
+
+| Parameter | Description | Default |
+|-----------|-------------|---------|
+| `limit` | Maximum items to return | 100 |
+| `offset` | Number of items to skip | 0 |
+| `page` | Page number (alternative to offset) | 1 |
+| `meta` | Include metadata (`*` for all) | none |
+
+## Meta Response
+
+When `meta=*` is included, the response contains:
+
+```json
+{
+  "data": [...],
+  "meta": {
+    "total_count": 1250,
+    "filter_count": 1250
+  }
+}
+```
+
+<Callout type="info" title="Calculating Pages" icon>
+  Total pages = `Math.ceil(total_count / limit)`
+  
+  For example, with 1250 items and limit=5: `Math.ceil(1250 / 5) = 250 pages`
+</Callout>
+
+## Page-Based Pagination
+
+Alternatively, use the `page` parameter instead of `offset`:
+
+<OpenPlaygroundButton
+  server={API_BASE_URL}
+  url="/items/codex"
+  method="GET"
+  queryParams={[
+    { name: "limit", defaultValue: "10" },
+    { name: "page", defaultValue: "2" },
+    { name: "meta", defaultValue: "*" },
+    { name: "fields", defaultValue: "id,name" }
+  ]}
+/>
+
+```bash
+GET /items/codex?limit=10&page=2&meta=*&fields=id,name
+```
+
+
+
+---
+
+## Document: List Items
+
+Retrieve all codex items with basic fields
+
+URL: /examples/codex/list-items
+
+
+# List Items
+
+import { API_BASE_URL } from "../../../constants";
+
+Retrieve all codex items with basic fields. Use the `fields` parameter to specify which fields to return and `limit` to control the number of results.
+
+<OpenPlaygroundButton
+  server={API_BASE_URL}
+  url="/items/codex"
+  method="GET"
+  queryParams={[
+    { name: "fields", defaultValue: "id,name,description" },
+    { name: "limit", defaultValue: "10" }
+  ]}
+/>
+
+```bash
+GET /items/codex?fields=id,name,description&limit=10
+```
+
+<Callout type="tip" title="Performance Tip" icon>
+  Always specify the `fields` parameter to return only the data you need. This reduces response size and improves performance.
+</Callout>
+
+## Available Fields
+
+Common fields you can request:
+
+| Field | Description |
+|-------|-------------|
+| `id` | Unique identifier |
+| `name` | Item name |
+| `description` | Item description |
+| `owner` | Ethereum wallet address |
+| `ancestor` | Parent item reference |
+| `timestamp_created` | Creation timestamp |
+| `timestamp_updated` | Last update timestamp |
+
+
+
+---
+
+## Document: Query by Owner
+
+Query all codex items owned by a specific Ethereum wallet address
+
+URL: /examples/codex/items-by-owner
+
+
+# Query by Owner
+
+import { API_BASE_URL } from "../../../constants";
+
+Query all codex items owned by a specific Ethereum wallet address using Directus filter syntax.
+
+<Callout type="caution" title="Important Notes" icon>
+  - **Address Format**: The owner address **must be lowercase**. Ethereum addresses are case-insensitive on the blockchain, but for consistent querying in Directus, always use lowercase format.
+  - **Filter Operator**: Use the `_eq` (equals) operator to match the exact owner address.
+  - **Filter Syntax**: The filter is passed as a query parameter using the bracket notation.
+</Callout>
+
+## Basic Query
+
+Query all codex items owned by address `0x614a61a3b7f2fd8750acaad63b2a0cfe8b8524f1`:
+
+<OpenPlaygroundButton
+  server={API_BASE_URL}
+  url="/items/codex"
+  method="GET"
+  queryParams={[
+    { name: "filter[owner][_eq]", defaultValue: "0x614a61a3b7f2fd8750acaad63b2a0cfe8b8524f1" },
+    { name: "fields", defaultValue: "id,name,owner" },
+    { name: "meta", defaultValue: "*" }
+  ]}
+/>
+
+```bash
+GET /items/codex?filter[owner][_eq]=0x614a61a3b7f2fd8750acaad63b2a0cfe8b8524f1&fields=id,name,owner&meta=*
+```
+
+## Common Mistakes
+
+<Callout type="danger" title="Avoid These Errors" icon>
+  
+  **1. Using uppercase letters**
+  ```
+  ❌ filter[owner][_eq]=0x614A61A3...  (won't match)
+  ✅ filter[owner][_eq]=0x614a61a3...  (correct)
+  ```
+  
+  **2. Missing `0x` prefix**
+  ```
+  ❌ filter[owner][_eq]=614a61a3...    (won't match)
+  ✅ filter[owner][_eq]=0x614a61a3...  (correct)
+  ```
+  
+  **3. Wrong operator**
+  ```
+  ❌ filter[owner][_contains]=0x614a...  (use _eq for exact match)
+  ✅ filter[owner][_eq]=0x614a61a3...    (correct)
+  ```
+</Callout>
+
+## Combine with Other Filters
+
+You can combine the owner filter with additional conditions using logical operators:
+
+<OpenPlaygroundButton
+  server={API_BASE_URL}
+  url="/items/codex"
+  method="GET"
+  queryParams={[
+    { name: "filter", defaultValue: "{\"_and\":[{\"owner\":{\"_eq\":\"0x614a61a3b7f2fd8750acaad63b2a0cfe8b8524f1\"}},{\"id\":{\"_gte\":100}}]}" },
+    { name: "fields", defaultValue: "id,name,owner" }
+  ]}
+/>
+
+```bash
+GET /items/codex?filter={"_and":[{"owner":{"_eq":"0x614a61a3b7f2fd8750acaad63b2a0cfe8b8524f1"}},{"id":{"_gte":100}}]}
+```
+
+This filters for items owned by the address AND with an ID greater than or equal to 100.
+
+
+
+---
+
+## Document: Get by ID
+
+Retrieve a specific codex item with all its details
+
+URL: /examples/codex/get-by-id
+
+
+# Get by ID
+
+import { API_BASE_URL } from "../../../constants";
+
+Retrieve a specific codex item by its unique identifier. Replace `{id}` with the actual item ID.
+
+<OpenPlaygroundButton
+  server={API_BASE_URL}
+  url="/items/codex/{id}"
+  method="GET"
+  pathParams={[
+    { name: "id", defaultValue: "1" }
+  ]}
+/>
+
+```bash
+GET /items/codex/1
+```
+
+## With Specific Fields
+
+You can also limit the returned fields:
+
+<OpenPlaygroundButton
+  server={API_BASE_URL}
+  url="/items/codex/{id}"
+  method="GET"
+  pathParams={[
+    { name: "id", defaultValue: "1" }
+  ]}
+  queryParams={[
+    { name: "fields", defaultValue: "id,name,description,owner" }
+  ]}
+/>
+
+```bash
+GET /items/codex/1?fields=id,name,description,owner
+```
+
+<Callout type="info" title="Not Found Response" icon>
+  If the item doesn't exist, the API will return a `404` status code with an error message.
+</Callout>
+
+
+
+---
+
+## Document: Filter by Name
+
+Search for codex items containing a specific name
+
+URL: /examples/codex/filter-by-name
+
+
+# Filter by Name
+
+import { API_BASE_URL } from "../../../constants";
+
+Search for codex items containing a specific text in their name using the `_contains` filter operator.
+
+<OpenPlaygroundButton
+  server={API_BASE_URL}
+  url="/items/codex"
+  method="GET"
+  queryParams={[
+    { name: "filter[name][_contains]", defaultValue: "Korka" },
+    { name: "fields", defaultValue: "id,name,description" }
+  ]}
+/>
+
+```bash
+GET /items/codex?filter[name][_contains]=Korka&fields=id,name,description
+```
+
+## Filter Operators
+
+| Operator | Description | Example |
+|----------|-------------|---------|
+| `_eq` | Equals | `filter[name][_eq]=Exact Name` |
+| `_neq` | Not equals | `filter[name][_neq]=Excluded` |
+| `_contains` | Contains substring | `filter[name][_contains]=partial` |
+| `_ncontains` | Does not contain | `filter[name][_ncontains]=excluded` |
+| `_starts_with` | Starts with | `filter[name][_starts_with]=prefix` |
+| `_ends_with` | Ends with | `filter[name][_ends_with]=suffix` |
+
+<Callout type="tip" title="Case Sensitivity" icon>
+  String filters are case-sensitive by default. Use `_icontains` for case-insensitive contains matching.
+</Callout>
+
+## Exact Match
+
+For an exact name match, use the `_eq` operator:
+
+<OpenPlaygroundButton
+  server={API_BASE_URL}
+  url="/items/codex"
+  method="GET"
+  queryParams={[
+    { name: "filter[name][_eq]", defaultValue: "My Exact Item Name" },
+    { name: "fields", defaultValue: "id,name,description" }
+  ]}
+/>
+
+```bash
+GET /items/codex?filter[name][_eq]=My Exact Item Name
+```
+
+
+
+---
+
+## Document: Exclude Null Values
+
+Filter out items with null values in specific fields
+
+URL: /examples/advanced/exclude-null
+
+
+# Exclude Null Values
+
+import { API_BASE_URL } from "../../../constants";
+
+Filter out items that have null values in specific fields using the `_nnull` (not null) operator.
+
+<OpenPlaygroundButton
+  server={API_BASE_URL}
+  url="/items/codex"
+  method="GET"
+  queryParams={[
+    { name: "filter[ancestor][_nnull]", defaultValue: "true" },
+    { name: "fields", defaultValue: "id,name,ancestor" }
+  ]}
+/>
+
+```bash
+GET /items/codex?filter[ancestor][_nnull]=true&fields=id,name,ancestor
+```
+
+## Null Check Operators
+
+| Operator | Description |
+|----------|-------------|
+| `_null` | Field is null |
+| `_nnull` | Field is not null |
+| `_empty` | Field is empty (null, empty string, or empty array) |
+| `_nempty` | Field is not empty |
+
+## Find Items Without Owner
+
+Find items where the owner field is null:
+
+<OpenPlaygroundButton
+  server={API_BASE_URL}
+  url="/items/codex"
+  method="GET"
+  queryParams={[
+    { name: "filter[owner][_null]", defaultValue: "true" },
+    { name: "fields", defaultValue: "id,name,owner" },
+    { name: "limit", defaultValue: "10" }
+  ]}
+/>
+
+```bash
+GET /items/codex?filter[owner][_null]=true&fields=id,name,owner
+```
+
+## Find Items With Description
+
+Find items that have a non-empty description:
+
+<OpenPlaygroundButton
+  server={API_BASE_URL}
+  url="/items/codex"
+  method="GET"
+  queryParams={[
+    { name: "filter[description][_nempty]", defaultValue: "true" },
+    { name: "fields", defaultValue: "id,name,description" },
+    { name: "limit", defaultValue: "10" }
+  ]}
+/>
+
+```bash
+GET /items/codex?filter[description][_nempty]=true
+```
+
+## Combine Multiple Null Checks
+
+Find items with both name and description:
+
+<OpenPlaygroundButton
+  server={API_BASE_URL}
+  url="/items/codex"
+  method="GET"
+  queryParams={[
+    { name: "filter[name][_nnull]", defaultValue: "true" },
+    { name: "filter[description][_nnull]", defaultValue: "true" },
+    { name: "fields", defaultValue: "id,name,description" },
+    { name: "limit", defaultValue: "10" }
+  ]}
+/>
+
+```bash
+GET /items/codex?filter[name][_nnull]=true&filter[description][_nnull]=true
+```
+
+<Callout type="info" title="Empty vs Null" icon>
+  - **`_null`**: Checks if the database value is `NULL`
+  - **`_empty`**: Checks for `NULL`, empty string `""`, or empty array `[]`
+  
+  Use `_empty` when you want to exclude both null and blank values.
+</Callout>
+
+
+
+---
+
+## Document: Complex Filters
+
+Combine multiple filters using logical operators
+
+URL: /examples/advanced/complex-filters
+
+
+# Complex Filters
+
+import { API_BASE_URL } from "../../../constants";
+
+Combine multiple filter conditions using logical operators like `_and` and `_or` for complex queries.
+
+<OpenPlaygroundButton
+  server={API_BASE_URL}
+  url="/items/codex"
+  method="GET"
+  queryParams={[
+    { name: "filter", defaultValue: "{\"_and\":[{\"id\":{\"_gte\":1}},{\"name\":{\"_nnull\":true}}]}" },
+    { name: "fields", defaultValue: "id,name,description" },
+    { name: "limit", defaultValue: "10" }
+  ]}
+/>
+
+```bash
+GET /items/codex?filter={"_and":[{"id":{"_gte":1}},{"name":{"_nnull":true}}]}
+```
+
+## Logical Operators
+
+| Operator | Description |
+|----------|-------------|
+| `_and` | All conditions must match |
+| `_or` | At least one condition must match |
+
+## AND Example
+
+Find items with ID >= 100 AND name is not null:
+
+<OpenPlaygroundButton
+  server={API_BASE_URL}
+  url="/items/codex"
+  method="GET"
+  queryParams={[
+    { name: "filter", defaultValue: "{\"_and\":[{\"id\":{\"_gte\":100}},{\"name\":{\"_nnull\":true}}]}" },
+    { name: "fields", defaultValue: "id,name" },
+    { name: "limit", defaultValue: "10" }
+  ]}
+/>
+
+```bash
+GET /items/codex?filter={"_and":[{"id":{"_gte":100}},{"name":{"_nnull":true}}]}
+```
+
+## OR Example
+
+Find items with ID = 1 OR ID = 2:
+
+<OpenPlaygroundButton
+  server={API_BASE_URL}
+  url="/items/codex"
+  method="GET"
+  queryParams={[
+    { name: "filter", defaultValue: "{\"_or\":[{\"id\":{\"_eq\":1}},{\"id\":{\"_eq\":2}}]}" },
+    { name: "fields", defaultValue: "id,name" }
+  ]}
+/>
+
+```bash
+GET /items/codex?filter={"_or":[{"id":{"_eq":1}},{"id":{"_eq":2}}]}
+```
+
+## Nested Logical Operators
+
+Combine AND and OR for complex logic:
+
+<OpenPlaygroundButton
+  server={API_BASE_URL}
+  url="/items/codex"
+  method="GET"
+  queryParams={[
+    { name: "filter", defaultValue: "{\"_and\":[{\"name\":{\"_nnull\":true}},{\"_or\":[{\"id\":{\"_lte\":10}},{\"id\":{\"_gte\":100}}]}]}" },
+    { name: "fields", defaultValue: "id,name" },
+    { name: "limit", defaultValue: "10" }
+  ]}
+/>
+
+```bash
+GET /items/codex?filter={"_and":[{"name":{"_nnull":true}},{"_or":[{"id":{"_lte":10}},{"id":{"_gte":100}}]}]}
+```
+
+<Callout type="tip" title="Filter Syntax" icon>
+  For complex filters, use the JSON syntax instead of bracket notation. URL-encode the JSON when sending requests.
+</Callout>
+
+## Alternative: Bracket Notation
+
+For simpler AND conditions, bracket notation is cleaner:
+
+<OpenPlaygroundButton
+  server={API_BASE_URL}
+  url="/items/codex"
+  method="GET"
+  queryParams={[
+    { name: "filter[id][_gte]", defaultValue: "1" },
+    { name: "filter[name][_nnull]", defaultValue: "true" },
+    { name: "fields", defaultValue: "id,name" },
+    { name: "limit", defaultValue: "10" }
+  ]}
+/>
+
+```bash
+GET /items/codex?filter[id][_gte]=1&filter[name][_nnull]=true
+```
+
+<Callout type="note" title="When to Use JSON" icon>
+  Use JSON syntax when you need `_or` operators or nested logic. Use bracket notation for simple AND conditions.
+</Callout>
+
+
+
+---
+
+## Document: Custom Transformations
+
+Apply custom width, height, and format transformations
+
+URL: /examples/assets/transformations
+
+
+# Custom Transformations
+
+Apply custom transformations to images using query parameters for width, height, format, and more.
+
+```bash
+GET /assets/{id}?width=800&height=600&fit=cover&format=webp&quality=80
+```
+
+## Transformation Parameters
+
+| Parameter | Description | Values |
+|-----------|-------------|--------|
+| `width` | Target width in pixels | Number |
+| `height` | Target height in pixels | Number |
+| `fit` | How to fit the image | `cover`, `contain`, `inside`, `outside` |
+| `format` | Output format | `jpg`, `png`, `webp`, `avif`, `tiff` |
+| `quality` | Compression quality | 1-100 |
+| `withoutEnlargement` | Don't upscale small images | `true`, `false` |
+
+## Fit Options
+
+<Callout type="info" title="Fit Modes" icon>
+
+- **`cover`**: Crop to fill exact dimensions (default)
+- **`contain`**: Fit within dimensions, may letterbox
+- **`inside`**: Like contain, but never upscale
+- **`outside`**: Like cover, but never downscale
+
+</Callout>
+
+## Examples
+
+### Resize to Width
+
+```bash
+GET /assets/{id}?width=400
+```
+
+### Resize with Aspect Ratio
+
+```bash
+GET /assets/{id}?width=800&height=600&fit=contain
+```
+
+### Convert to WebP
+
+```bash
+GET /assets/{id}?format=webp&quality=85
+```
+
+### Square Thumbnail
+
+```bash
+GET /assets/{id}?width=200&height=200&fit=cover
+```
+
+<Callout type="tip" title="Performance" icon>
+  Use `webp` or `avif` formats for smaller file sizes. They offer 25-35% better compression than JPEG with similar quality.
+</Callout>
+
+
+
+---
+
+## Document: Sharp Transformations
+
+Use Sharp API for advanced image processing
+
+URL: /examples/assets/sharp
+
+
+# Sharp Transformations
+
+Apply advanced image transformations using the Sharp library's powerful API through the `transforms` parameter.
+
+```bash
+GET /assets/{id}?transforms=[["rotate",90],["blur",5]]
+```
+
+<Callout type="caution" title="JSON Syntax" icon>
+  The `transforms` parameter accepts a JSON array of operations. Each operation is an array with the method name and its arguments.
+</Callout>
+
+## Available Operations
+
+| Operation | Arguments | Description |
+|-----------|-----------|-------------|
+| `rotate` | `degrees` | Rotate image (90, 180, 270) |
+| `blur` | `sigma` | Gaussian blur (0.3-1000) |
+| `sharpen` | `sigma?`, `flat?`, `jagged?` | Sharpen image |
+| `flip` | — | Flip vertically |
+| `flop` | — | Flip horizontally |
+| `grayscale` | — | Convert to grayscale |
+| `negate` | — | Invert colors |
+| `normalize` | — | Enhance contrast |
+| `gamma` | `gamma` | Adjust gamma (1.0-3.0) |
+| `tint` | `{r,g,b}` | Apply color tint |
+
+## Examples
+
+### Rotate 90 Degrees
+
+```bash
+GET /assets/{id}?transforms=[["rotate",90]]
+```
+
+### Apply Blur
+
+```bash
+GET /assets/{id}?transforms=[["blur",10]]
+```
+
+### Grayscale
+
+```bash
+GET /assets/{id}?transforms=[["grayscale"]]
+```
+
+### Multiple Operations
+
+Chain multiple transformations:
+
+```bash
+GET /assets/{id}?transforms=[["rotate",90],["grayscale"],["blur",2]]
+```
+
+### Flip and Sharpen
+
+```bash
+GET /assets/{id}?transforms=[["flip"],["sharpen"]]
+```
+
+<Callout type="note" title="Order Matters" icon>
+  Transformations are applied in the order specified. `rotate` then `blur` produces different results than `blur` then `rotate`.
+</Callout>
+
+## Combine with Other Parameters
+
+Sharp transforms can be combined with standard parameters:
+
+```bash
+GET /assets/{id}?width=800&format=webp&transforms=[["grayscale"],["sharpen"]]
+```
+
+
+
+---
+
+## Document: Image Presets
+
+Retrieve images using transformation presets
+
+URL: /examples/assets/presets
+
+
+# Image Presets
+
+Retrieve images using pre-configured transformation presets. Presets allow you to consistently resize and transform images without specifying parameters each time.
+
+```bash
+GET /assets/{id}?key=s512
+```
+
+<Callout type="note" title="Available Presets" icon>
+  Available presets: `s128`, `s256`, `s512`, `s1024` — each resizes the image to the specified width while maintaining aspect ratio.
+</Callout>
+
+## Preset Reference
+
+| Preset | Width | Use Case |
+|--------|-------|----------|
+| `s128` | 128px | Thumbnails, avatars |
+| `s256` | 256px | Small previews |
+| `s512` | 512px | Medium previews, cards |
+| `s1024` | 1024px | Large images, hero sections |
+
+## Example URLs
+
+```bash
+# Thumbnail (128px)
+GET /assets/a1b2c3d4-e5f6-7890-1234-abcdef123456?key=s128
+
+# Card preview (512px)
+GET /assets/a1b2c3d4-e5f6-7890-1234-abcdef123456?key=s512
+
+# Full size (1024px)
+GET /assets/a1b2c3d4-e5f6-7890-1234-abcdef123456?key=s1024
+```
+
+<Callout type="tip" title="Caching" icon>
+  Transformed images are cached on the server. Subsequent requests for the same preset are served instantly.
+</Callout>
+

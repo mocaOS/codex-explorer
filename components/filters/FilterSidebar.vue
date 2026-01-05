@@ -347,6 +347,63 @@
         </div>
       </div>
 
+      <div class="rounded-md border border-white/10 bg-neutral-900/50">
+        <button
+          @click="toggleAccordion('owner')"
+          class="flex w-full items-center justify-between px-3 py-2.5 text-left transition-colors hover:bg-white/5"
+        >
+          <h3 class="text-sm font-medium">
+            Owner
+            <span v-if="localFilters.owner.length > 0" class="ml-1 text-xs text-white/50">
+              ({{ localFilters.owner.length }} selected)
+            </span>
+          </h3>
+          <ChevronDown 
+            class="h-4 w-4 transition-transform duration-200"
+            :class="{ 'rotate-180': accordionState.owner }"
+          />
+        </button>
+        <div 
+          v-show="accordionState.owner"
+          class="border-t border-white/10"
+        >
+          <!-- Owner Search Bar -->
+          <div class="p-2 border-b border-white/10">
+            <Input
+              v-model="ownerSearch"
+              placeholder="Paste address to search..."
+              class="w-full rounded-md border border-white/10 bg-neutral-800 px-2 py-1.5 text-xs text-white placeholder:text-gray-500"
+            />
+          </div>
+          
+          <!-- Owner List -->
+          <div class="max-h-48 overflow-y-auto p-2">
+            <label
+              v-for="owner in filteredOwners"
+              :key="owner"
+              class="flex cursor-pointer items-center gap-2 rounded px-2 py-1.5 hover:bg-white/5"
+            >
+              <input
+                type="checkbox"
+                :value="owner"
+                :checked="localFilters.owner.includes(owner)"
+                @change="toggleFilter('owner', owner)"
+                class="h-4 w-4 shrink-0 rounded border-white/30 bg-neutral-800 text-white accent-white focus:ring-2 focus:ring-white/50 focus:ring-offset-0"
+              />
+              <span class="flex-1 text-xs font-mono">
+                {{ shortenAddress(owner) }}
+                <span class="text-xs text-white/40">({{ ownerCounts[owner] || 0 }})</span>
+              </span>
+            </label>
+            
+            <!-- No results message -->
+            <div v-if="filteredOwners.length === 0" class="px-2 py-3 text-center text-xs text-white/40">
+              No matching addresses
+            </div>
+          </div>
+        </div>
+      </div>
+
     </div>
 
     <Button
@@ -375,6 +432,7 @@ interface Filters {
   dnaMemetic: string[];
   dnaArtistSelfPortrait: string[];
   dnaMOCACollection: string[];
+  owner: string[];
 }
 
 // Define the unique traits interface
@@ -387,6 +445,7 @@ interface UniqueTraits {
   dnaMemetics: string[];
   dnaArtistSelfPortraits: string[];
   dnaMOCACollections: string[];
+  owners: string[];
 }
 
 // Define trait counts interface
@@ -408,6 +467,7 @@ const traitCounts = traitCountsData as TraitCounts;
 const props = defineProps<{
   filters: Filters;
   uniqueTraits: UniqueTraits;
+  ownerCounts: Record<string, number>;
   totalResults: number;
   isCalculating: boolean;
 }>();
@@ -482,6 +542,46 @@ const sortedDnaMOCACollections = computed(() => {
   });
 });
 
+// Sorted owners by count (highest count first - most DeCC0s to fewest)
+const sortedOwners = computed(() => {
+  return [...props.uniqueTraits.owners].sort((a, b) => {
+    const countA = props.ownerCounts[a] || 0;
+    const countB = props.ownerCounts[b] || 0;
+    return countB - countA; // Descending order: largest count first
+  });
+});
+
+// Helper function to shorten Ethereum addresses
+function shortenAddress(address: string): string {
+  if (!address || address.length < 10) return address;
+  return `${address.slice(0, 6)}...${address.slice(-6)}`;
+}
+
+// Owner search state
+const ownerSearch = ref('');
+
+// Filtered owners based on search
+const filteredOwners = computed(() => {
+  if (!ownerSearch.value.trim()) {
+    return sortedOwners.value;
+  }
+  
+  const searchLower = ownerSearch.value.toLowerCase().trim();
+  
+  // Filter owners that match the search
+  const matching = sortedOwners.value.filter(owner => 
+    owner.toLowerCase().includes(searchLower)
+  );
+  
+  // Always show checked owners even if they don't match search
+  const checkedOwners = localFilters.owner.filter(owner => 
+    !matching.includes(owner)
+  );
+  
+  // Combine: checked owners first, then matching results
+  return [...checkedOwners, ...matching];
+});
+
 // Local filters state
 const localFilters = reactive({ ...props.filters });
 
@@ -495,6 +595,7 @@ const accordionState = reactive({
   background: false,
   backgroundTexture: false,
   mood: false,
+  owner: false,
 });
 
 // Toggle accordion
@@ -618,8 +719,10 @@ const resetFilters = () => {
     dnaLineage: [],
     dnaMemetic: [],
     dnaArtistSelfPortrait: [],
-    dnaMOCACollection: []
+    dnaMOCACollection: [],
+    owner: []
   });
+  ownerSearch.value = '';
   emit('update:filters', { ...localFilters });
 };
 </script>
