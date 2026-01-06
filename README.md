@@ -291,7 +291,7 @@ This frontend consumes the **MOCA Codex API** built on Directus. For comprehensi
 
 - **API Documentation**: [docs.decc0s.com](https://docs.decc0s.com)
 - **Backend Repository**: [github.com/mocaOS/codex](https://github.com/mocaOS/codex)
-- **OpenAPI Spec**: See `llm.json` in this repository for endpoint details
+- **OpenAPI Spec**: See `oas.json` in this repository for complete endpoint details
 
 ### Key API Endpoints Used
 - `GET /items/codex` - Fetch all Art DeCC0 metadata with nested thumbnail objects (full composite, character-only, background)
@@ -301,6 +301,95 @@ This frontend consumes the **MOCA Codex API** built on Directus. For comprehensi
   - `?key=s512` - 512px preset
   - `?key=s1024` - 1024px preset (high quality)
 - **IPFS Gateway** - Full resolution images for 4K quality mode
+
+### Agentic Coding Resources
+
+This repository includes comprehensive documentation files optimized for AI-powered development, all **downloaded from [docs.decc0s.com](https://docs.decc0s.com)** and kept in sync with the latest API.
+
+#### Documentation Files
+
+**`oas.json`** - Full OpenAPI 3.0 specification (structured)
+- Complete API endpoint documentation with schemas
+- Request/response formats and examples
+- Parameter definitions and validation rules
+- Error response structures
+- Authentication schemes
+- **Size**: ~1MB (structured JSON)
+- **Best for**: AI code generation, API client scaffolding, type generation
+- **Context window**: Medium (works with most AI models)
+
+**`llms-full.txt`** - Complete natural language documentation (~2,427 lines)
+- Full human-readable endpoint descriptions with embedded examples
+- Comprehensive query syntax and filtering guides
+- Complete usage patterns and best practices
+- All examples and use cases inline
+- Step-by-step tutorials for complex operations
+- **Size**: ~140KB (full text)
+- **Best for**: Deep technical understanding, complex query building, comprehensive reference
+- **Context window**: Large (requires 200K+ token models like Claude Sonnet, GPT-4 Turbo)
+
+**`llms.txt`** - Lightweight documentation index (~28 lines)
+- Table of contents with section links
+- Quick reference to documentation structure
+- Minimal context footprint
+- **Size**: ~2KB (index only)
+- **Best for**: Quick lookups, small context windows, navigation reference
+- **Context window**: Tiny (works with any AI model, even small ones)
+
+#### Choosing the Right File
+
+**Use `llms.txt` when:**
+- Working with small context window models (< 32K tokens)
+- Need quick reference to available documentation sections
+- Want minimal context usage for simple queries
+- Combining with other large files in your prompt
+
+**Use `llms-full.txt` when:**
+- Working with large context window models (Claude Sonnet, GPT-4 Turbo)
+- Building complex query logic with multiple filters
+- Need comprehensive examples and detailed explanations
+- Want all documentation embedded for deep technical tasks
+
+**Use `oas.json` when:**
+- Generating TypeScript types or API clients
+- Building structured request/response handlers
+- Need exact schema validation rules
+- Working with tools that parse OpenAPI specs
+
+#### Using These Files with AI Coding Assistants
+
+Attach these files to your AI coding sessions (Cursor, GitHub Copilot, Claude, etc.) for:
+- **Accurate API Integration** - AI generates correct endpoint calls with proper parameters
+- **Type-Safe Code** - Schema definitions ensure proper TypeScript/JavaScript types
+- **Query Building** - Filter/sort syntax examples for complex queries
+- **Error Handling** - Proper error response handling patterns
+- **Documentation** - Instant answers about API capabilities without context switching
+
+**Example workflow:**
+```bash
+# Small task with limited context? Use llms.txt:
+# "What endpoints are available for querying codex items?"
+
+# Complex query building? Use llms-full.txt:
+# "Generate a TypeScript function to query DeCC0s by character type 
+#  with pagination, sorting by timestamp, and field selection"
+
+# Type generation? Use oas.json:
+# "Generate TypeScript interfaces for all Codex API responses"
+
+# Maximum power? Combine them:
+# Attach: oas.json + llms-full.txt
+# "Build a complete API client with type safety and error handling"
+```
+
+The AI will reference these files to provide accurate, working code based on the actual API specification.
+
+#### Pro Tips
+
+- **Cursor/VS Code**: Drag files into chat or use `@llms.txt` / `@llms-full.txt` / `@oas.json`
+- **Claude Projects**: Upload all three files for comprehensive API knowledge
+- **Token budget**: `llms.txt` (~2KB) → `oas.json` (~1MB) → `llms-full.txt` (~140KB)
+- **Update frequency**: Re-download from docs.decc0s.com when API updates
 
 ---
 
