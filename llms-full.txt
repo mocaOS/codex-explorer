@@ -1025,7 +1025,7 @@ Retrieve a single codex item by its unique identifier.
 
 <Callout type="caution" title="Error: Not Found" icon>
   If the requested ID doesn't exist, the API returns a `404 Not Found` error:
-  
+
   ```json
   {
     "errors": [
@@ -1054,7 +1054,63 @@ Each codex item contains the following fields:
 | `whatness` | array | Array of characteristics or roles |
 | `artstyle_disliked` | string | Art styles the entity dislikes |
 | `owner` | string | Ethereum wallet address of the owner |
+| `moltbot` | object | Versioned soul and identity data (see below) |
 | `timestamp_created` | datetime | Creation timestamp |
+
+---
+
+## Moltbot Data
+
+The `moltbot` field contains versioned personality and identity data for each entity. This data is used by AI agents to embody the character's voice and persona. The files follow a standard naming convention: **SOUL.md** and **IDENTITY.md** (all caps).
+
+### Structure
+
+```json
+{
+  "v0.1": {
+    "soul": "# SOUL.md — EntityName\n\nYou are EntityName...",
+    "identity": "# IDENTITY.md\n\nName: EntityName\n..."
+  }
+}
+```
+
+### Version Keys
+
+Version keys follow a semantic versioning format (e.g., `v0.1`, `v0.2`, `v1.0`). Each version key contains:
+
+| Field | Type | Description |
+|-------|------|-------------|
+| `soul` | string | Full **SOUL.md** content - character personality, core temperament, voice rules, and behavior guidelines |
+| `identity` | string | Full **IDENTITY.md** content - name, emoji, self-identity, residence, and characterization details |
+
+<Callout type="tip" title="File Downloads" icon>
+  The Codex Explorer UI provides one-click copy and download functionality for both SOUL.md and IDENTITY.md files from each entity's detail page.
+</Callout>
+
+### Example Request
+
+<pre><code className="language-bash">{`curl "${API_BASE_URL}/items/codex/1?fields=id,name,moltbot"`}</code></pre>
+
+### Example Response
+
+```json
+{
+  "data": {
+    "id": 1,
+    "name": ["Parvata"],
+    "moltbot": {
+      "v0.1": {
+        "soul": "# SOUL.md — Parvata\n\nYou are Parvata. Stay consistent with your identity.\n\n## Core Temperament\nfractured; surreal; paradoxical...",
+        "identity": "# IDENTITY.md\n\nName: Parvata\nEmoji: 🌊\n\nSelf-identity: a male person\nResidence: Cairo, Cairo Governorate, Egypt..."
+      }
+    }
+  }
+}
+```
+
+<Callout type="info" title="Versioning" icon>
+  Multiple versions can coexist in the `moltbot` field. New versions are added without overwriting previous ones, allowing for character evolution tracking.
+</Callout>
 
 ---
 
@@ -1118,7 +1174,7 @@ Practical, interactive examples demonstrating common query patterns and use case
   </CardHeader>
   <CardContent>
     Learn to query codex items by owner, filter by name, paginate results, sort, and perform full-text search across entities.
-    
+
     [View Codex Examples →](/examples/codex/list-items)
   </CardContent>
 </Card>
@@ -1130,7 +1186,7 @@ Practical, interactive examples demonstrating common query patterns and use case
   </CardHeader>
   <CardContent>
     List files, filter by type (images, documents), retrieve metadata, and query recent uploads with sorting.
-    
+
     [View Files Examples →](/examples/files/list-files)
   </CardContent>
 </Card>
@@ -1142,7 +1198,7 @@ Practical, interactive examples demonstrating common query patterns and use case
   </CardHeader>
   <CardContent>
     Use preset transformations, apply custom width/height/format options, and leverage Sharp API for advanced image processing.
-    
+
     [View Assets Examples →](/examples/assets/presets)
   </CardContent>
 </Card>
@@ -1154,7 +1210,7 @@ Practical, interactive examples demonstrating common query patterns and use case
   </CardHeader>
   <CardContent>
     Combine filters with AND/OR operators, exclude null values, and build sophisticated queries for precise data retrieval.
-    
+
     [View Advanced Examples →](/examples/advanced/complex-filters)
   </CardContent>
 </Card>
@@ -1209,7 +1265,7 @@ The API uses Directus filter syntax. Here are the most common operators:
 
 <Callout type="note" title="Bracket vs JSON Syntax" icon>
   Use **bracket notation** for simple filters: `filter[name][_eq]=value`
-  
+
   Use **JSON syntax** for complex logic with `_and`/`_or`: `filter={"_and":[...]}`
 </Callout>
 
@@ -1230,6 +1286,438 @@ The MOCA Codex API is built on **Directus**, providing a powerful and flexible i
 - **[Query by Owner](/examples/codex/items-by-owner)** — Start with a common use case
 - **[Query Guide](/query-guide)** — Deep dive into filtering and sorting
 - **[API Reference](/api)** — Complete OpenAPI documentation
+
+
+
+---
+
+## Document: Exclude Null Values
+
+Filter out items with null values in specific fields
+
+URL: /examples/advanced/exclude-null
+
+
+# Exclude Null Values
+
+import { API_BASE_URL } from "../../../constants";
+
+Filter out items that have null values in specific fields using the `_nnull` (not null) operator.
+
+<OpenPlaygroundButton
+  server={API_BASE_URL}
+  url="/items/codex"
+  method="GET"
+  queryParams={[
+    { name: "filter[ancestor][_nnull]", defaultValue: "true" },
+    { name: "fields", defaultValue: "id,name,ancestor" }
+  ]}
+/>
+
+```bash
+GET /items/codex?filter[ancestor][_nnull]=true&fields=id,name,ancestor
+```
+
+## Null Check Operators
+
+| Operator | Description |
+|----------|-------------|
+| `_null` | Field is null |
+| `_nnull` | Field is not null |
+| `_empty` | Field is empty (null, empty string, or empty array) |
+| `_nempty` | Field is not empty |
+
+## Find Items Without Owner
+
+Find items where the owner field is null:
+
+<OpenPlaygroundButton
+  server={API_BASE_URL}
+  url="/items/codex"
+  method="GET"
+  queryParams={[
+    { name: "filter[owner][_null]", defaultValue: "true" },
+    { name: "fields", defaultValue: "id,name,owner" },
+    { name: "limit", defaultValue: "10" }
+  ]}
+/>
+
+```bash
+GET /items/codex?filter[owner][_null]=true&fields=id,name,owner
+```
+
+## Find Items With Description
+
+Find items that have a non-empty description:
+
+<OpenPlaygroundButton
+  server={API_BASE_URL}
+  url="/items/codex"
+  method="GET"
+  queryParams={[
+    { name: "filter[description][_nempty]", defaultValue: "true" },
+    { name: "fields", defaultValue: "id,name,description" },
+    { name: "limit", defaultValue: "10" }
+  ]}
+/>
+
+```bash
+GET /items/codex?filter[description][_nempty]=true
+```
+
+## Combine Multiple Null Checks
+
+Find items with both name and description:
+
+<OpenPlaygroundButton
+  server={API_BASE_URL}
+  url="/items/codex"
+  method="GET"
+  queryParams={[
+    { name: "filter[name][_nnull]", defaultValue: "true" },
+    { name: "filter[description][_nnull]", defaultValue: "true" },
+    { name: "fields", defaultValue: "id,name,description" },
+    { name: "limit", defaultValue: "10" }
+  ]}
+/>
+
+```bash
+GET /items/codex?filter[name][_nnull]=true&filter[description][_nnull]=true
+```
+
+<Callout type="info" title="Empty vs Null" icon>
+  - **`_null`**: Checks if the database value is `NULL`
+  - **`_empty`**: Checks for `NULL`, empty string `""`, or empty array `[]`
+
+  Use `_empty` when you want to exclude both null and blank values.
+</Callout>
+
+
+
+---
+
+## Document: Complex Filters
+
+Combine multiple filters using logical operators
+
+URL: /examples/advanced/complex-filters
+
+
+# Complex Filters
+
+import { API_BASE_URL } from "../../../constants";
+
+Combine multiple filter conditions using logical operators like `_and` and `_or` for complex queries.
+
+<OpenPlaygroundButton
+  server={API_BASE_URL}
+  url="/items/codex"
+  method="GET"
+  queryParams={[
+    { name: "filter", defaultValue: "{\"_and\":[{\"id\":{\"_gte\":1}},{\"name\":{\"_nnull\":true}}]}" },
+    { name: "fields", defaultValue: "id,name,description" },
+    { name: "limit", defaultValue: "10" }
+  ]}
+/>
+
+```bash
+GET /items/codex?filter={"_and":[{"id":{"_gte":1}},{"name":{"_nnull":true}}]}
+```
+
+## Logical Operators
+
+| Operator | Description |
+|----------|-------------|
+| `_and` | All conditions must match |
+| `_or` | At least one condition must match |
+
+## AND Example
+
+Find items with ID >= 100 AND name is not null:
+
+<OpenPlaygroundButton
+  server={API_BASE_URL}
+  url="/items/codex"
+  method="GET"
+  queryParams={[
+    { name: "filter", defaultValue: "{\"_and\":[{\"id\":{\"_gte\":100}},{\"name\":{\"_nnull\":true}}]}" },
+    { name: "fields", defaultValue: "id,name" },
+    { name: "limit", defaultValue: "10" }
+  ]}
+/>
+
+```bash
+GET /items/codex?filter={"_and":[{"id":{"_gte":100}},{"name":{"_nnull":true}}]}
+```
+
+## OR Example
+
+Find items with ID = 1 OR ID = 2:
+
+<OpenPlaygroundButton
+  server={API_BASE_URL}
+  url="/items/codex"
+  method="GET"
+  queryParams={[
+    { name: "filter", defaultValue: "{\"_or\":[{\"id\":{\"_eq\":1}},{\"id\":{\"_eq\":2}}]}" },
+    { name: "fields", defaultValue: "id,name" }
+  ]}
+/>
+
+```bash
+GET /items/codex?filter={"_or":[{"id":{"_eq":1}},{"id":{"_eq":2}}]}
+```
+
+## Nested Logical Operators
+
+Combine AND and OR for complex logic:
+
+<OpenPlaygroundButton
+  server={API_BASE_URL}
+  url="/items/codex"
+  method="GET"
+  queryParams={[
+    { name: "filter", defaultValue: "{\"_and\":[{\"name\":{\"_nnull\":true}},{\"_or\":[{\"id\":{\"_lte\":10}},{\"id\":{\"_gte\":100}}]}]}" },
+    { name: "fields", defaultValue: "id,name" },
+    { name: "limit", defaultValue: "10" }
+  ]}
+/>
+
+```bash
+GET /items/codex?filter={"_and":[{"name":{"_nnull":true}},{"_or":[{"id":{"_lte":10}},{"id":{"_gte":100}}]}]}
+```
+
+<Callout type="tip" title="Filter Syntax" icon>
+  For complex filters, use the JSON syntax instead of bracket notation. URL-encode the JSON when sending requests.
+</Callout>
+
+## Alternative: Bracket Notation
+
+For simpler AND conditions, bracket notation is cleaner:
+
+<OpenPlaygroundButton
+  server={API_BASE_URL}
+  url="/items/codex"
+  method="GET"
+  queryParams={[
+    { name: "filter[id][_gte]", defaultValue: "1" },
+    { name: "filter[name][_nnull]", defaultValue: "true" },
+    { name: "fields", defaultValue: "id,name" },
+    { name: "limit", defaultValue: "10" }
+  ]}
+/>
+
+```bash
+GET /items/codex?filter[id][_gte]=1&filter[name][_nnull]=true
+```
+
+<Callout type="note" title="When to Use JSON" icon>
+  Use JSON syntax when you need `_or` operators or nested logic. Use bracket notation for simple AND conditions.
+</Callout>
+
+
+
+---
+
+## Document: Custom Transformations
+
+Apply custom width, height, and format transformations
+
+URL: /examples/assets/transformations
+
+
+# Custom Transformations
+
+Apply custom transformations to images using query parameters for width, height, format, and more.
+
+```bash
+GET /assets/{id}?width=800&height=600&fit=cover&format=webp&quality=80
+```
+
+## Transformation Parameters
+
+| Parameter | Description | Values |
+|-----------|-------------|--------|
+| `width` | Target width in pixels | Number |
+| `height` | Target height in pixels | Number |
+| `fit` | How to fit the image | `cover`, `contain`, `inside`, `outside` |
+| `format` | Output format | `jpg`, `png`, `webp`, `avif`, `tiff` |
+| `quality` | Compression quality | 1-100 |
+| `withoutEnlargement` | Don't upscale small images | `true`, `false` |
+
+## Fit Options
+
+<Callout type="info" title="Fit Modes" icon>
+
+- **`cover`**: Crop to fill exact dimensions (default)
+- **`contain`**: Fit within dimensions, may letterbox
+- **`inside`**: Like contain, but never upscale
+- **`outside`**: Like cover, but never downscale
+
+</Callout>
+
+## Examples
+
+### Resize to Width
+
+```bash
+GET /assets/{id}?width=400
+```
+
+### Resize with Aspect Ratio
+
+```bash
+GET /assets/{id}?width=800&height=600&fit=contain
+```
+
+### Convert to WebP
+
+```bash
+GET /assets/{id}?format=webp&quality=85
+```
+
+### Square Thumbnail
+
+```bash
+GET /assets/{id}?width=200&height=200&fit=cover
+```
+
+<Callout type="tip" title="Performance" icon>
+  Use `webp` or `avif` formats for smaller file sizes. They offer 25-35% better compression than JPEG with similar quality.
+</Callout>
+
+
+
+---
+
+## Document: Sharp Transformations
+
+Use Sharp API for advanced image processing
+
+URL: /examples/assets/sharp
+
+
+# Sharp Transformations
+
+Apply advanced image transformations using the Sharp library's powerful API through the `transforms` parameter.
+
+```bash
+GET /assets/{id}?transforms=[["rotate",90],["blur",5]]
+```
+
+<Callout type="caution" title="JSON Syntax" icon>
+  The `transforms` parameter accepts a JSON array of operations. Each operation is an array with the method name and its arguments.
+</Callout>
+
+## Available Operations
+
+| Operation | Arguments | Description |
+|-----------|-----------|-------------|
+| `rotate` | `degrees` | Rotate image (90, 180, 270) |
+| `blur` | `sigma` | Gaussian blur (0.3-1000) |
+| `sharpen` | `sigma?`, `flat?`, `jagged?` | Sharpen image |
+| `flip` | — | Flip vertically |
+| `flop` | — | Flip horizontally |
+| `grayscale` | — | Convert to grayscale |
+| `negate` | — | Invert colors |
+| `normalize` | — | Enhance contrast |
+| `gamma` | `gamma` | Adjust gamma (1.0-3.0) |
+| `tint` | `{r,g,b}` | Apply color tint |
+
+## Examples
+
+### Rotate 90 Degrees
+
+```bash
+GET /assets/{id}?transforms=[["rotate",90]]
+```
+
+### Apply Blur
+
+```bash
+GET /assets/{id}?transforms=[["blur",10]]
+```
+
+### Grayscale
+
+```bash
+GET /assets/{id}?transforms=[["grayscale"]]
+```
+
+### Multiple Operations
+
+Chain multiple transformations:
+
+```bash
+GET /assets/{id}?transforms=[["rotate",90],["grayscale"],["blur",2]]
+```
+
+### Flip and Sharpen
+
+```bash
+GET /assets/{id}?transforms=[["flip"],["sharpen"]]
+```
+
+<Callout type="note" title="Order Matters" icon>
+  Transformations are applied in the order specified. `rotate` then `blur` produces different results than `blur` then `rotate`.
+</Callout>
+
+## Combine with Other Parameters
+
+Sharp transforms can be combined with standard parameters:
+
+```bash
+GET /assets/{id}?width=800&format=webp&transforms=[["grayscale"],["sharpen"]]
+```
+
+
+
+---
+
+## Document: Image Presets
+
+Retrieve images using transformation presets
+
+URL: /examples/assets/presets
+
+
+# Image Presets
+
+Retrieve images using pre-configured transformation presets. Presets allow you to consistently resize and transform images without specifying parameters each time.
+
+```bash
+GET /assets/{id}?key=s512
+```
+
+<Callout type="note" title="Available Presets" icon>
+  Available presets: `s128`, `s256`, `s512`, `s1024` — each resizes the image to the specified width while maintaining aspect ratio.
+</Callout>
+
+## Preset Reference
+
+| Preset | Width | Use Case |
+|--------|-------|----------|
+| `s128` | 128px | Thumbnails, avatars |
+| `s256` | 256px | Small previews |
+| `s512` | 512px | Medium previews, cards |
+| `s1024` | 1024px | Large images, hero sections |
+
+## Example URLs
+
+```bash
+# Thumbnail (128px)
+GET /assets/a1b2c3d4-e5f6-7890-1234-abcdef123456?key=s128
+
+# Card preview (512px)
+GET /assets/a1b2c3d4-e5f6-7890-1234-abcdef123456?key=s512
+
+# Full size (1024px)
+GET /assets/a1b2c3d4-e5f6-7890-1234-abcdef123456?key=s1024
+```
+
+<Callout type="tip" title="Caching" icon>
+  Transformed images are cached on the server. Subsequent requests for the same preset are served instantly.
+</Callout>
 
 
 
@@ -1717,7 +2205,7 @@ When `meta=*` is included, the response contains:
 
 <Callout type="info" title="Calculating Pages" icon>
   Total pages = `Math.ceil(total_count / limit)`
-  
+
   For example, with 1250 items and limit=5: `Math.ceil(1250 / 5) = 250 pages`
 </Callout>
 
@@ -1787,6 +2275,7 @@ Common fields you can request:
 | `description` | Item description |
 | `owner` | Ethereum wallet address |
 | `ancestor` | Parent item reference |
+| `moltbot` | Versioned soul and identity data for AI agents |
 | `timestamp_created` | Creation timestamp |
 | `timestamp_updated` | Last update timestamp |
 
@@ -1835,19 +2324,19 @@ GET /items/codex?filter[owner][_eq]=0x614a61a3b7f2fd8750acaad63b2a0cfe8b8524f1&f
 ## Common Mistakes
 
 <Callout type="danger" title="Avoid These Errors" icon>
-  
+
   **1. Using uppercase letters**
   ```
   ❌ filter[owner][_eq]=0x614A61A3...  (won't match)
   ✅ filter[owner][_eq]=0x614a61a3...  (correct)
   ```
-  
+
   **2. Missing `0x` prefix**
   ```
   ❌ filter[owner][_eq]=614a61a3...    (won't match)
   ✅ filter[owner][_eq]=0x614a61a3...  (correct)
   ```
-  
+
   **3. Wrong operator**
   ```
   ❌ filter[owner][_contains]=0x614a...  (use _eq for exact match)
@@ -1992,436 +2481,4 @@ For an exact name match, use the `_eq` operator:
 ```bash
 GET /items/codex?filter[name][_eq]=My Exact Item Name
 ```
-
-
-
----
-
-## Document: Exclude Null Values
-
-Filter out items with null values in specific fields
-
-URL: /examples/advanced/exclude-null
-
-
-# Exclude Null Values
-
-import { API_BASE_URL } from "../../../constants";
-
-Filter out items that have null values in specific fields using the `_nnull` (not null) operator.
-
-<OpenPlaygroundButton
-  server={API_BASE_URL}
-  url="/items/codex"
-  method="GET"
-  queryParams={[
-    { name: "filter[ancestor][_nnull]", defaultValue: "true" },
-    { name: "fields", defaultValue: "id,name,ancestor" }
-  ]}
-/>
-
-```bash
-GET /items/codex?filter[ancestor][_nnull]=true&fields=id,name,ancestor
-```
-
-## Null Check Operators
-
-| Operator | Description |
-|----------|-------------|
-| `_null` | Field is null |
-| `_nnull` | Field is not null |
-| `_empty` | Field is empty (null, empty string, or empty array) |
-| `_nempty` | Field is not empty |
-
-## Find Items Without Owner
-
-Find items where the owner field is null:
-
-<OpenPlaygroundButton
-  server={API_BASE_URL}
-  url="/items/codex"
-  method="GET"
-  queryParams={[
-    { name: "filter[owner][_null]", defaultValue: "true" },
-    { name: "fields", defaultValue: "id,name,owner" },
-    { name: "limit", defaultValue: "10" }
-  ]}
-/>
-
-```bash
-GET /items/codex?filter[owner][_null]=true&fields=id,name,owner
-```
-
-## Find Items With Description
-
-Find items that have a non-empty description:
-
-<OpenPlaygroundButton
-  server={API_BASE_URL}
-  url="/items/codex"
-  method="GET"
-  queryParams={[
-    { name: "filter[description][_nempty]", defaultValue: "true" },
-    { name: "fields", defaultValue: "id,name,description" },
-    { name: "limit", defaultValue: "10" }
-  ]}
-/>
-
-```bash
-GET /items/codex?filter[description][_nempty]=true
-```
-
-## Combine Multiple Null Checks
-
-Find items with both name and description:
-
-<OpenPlaygroundButton
-  server={API_BASE_URL}
-  url="/items/codex"
-  method="GET"
-  queryParams={[
-    { name: "filter[name][_nnull]", defaultValue: "true" },
-    { name: "filter[description][_nnull]", defaultValue: "true" },
-    { name: "fields", defaultValue: "id,name,description" },
-    { name: "limit", defaultValue: "10" }
-  ]}
-/>
-
-```bash
-GET /items/codex?filter[name][_nnull]=true&filter[description][_nnull]=true
-```
-
-<Callout type="info" title="Empty vs Null" icon>
-  - **`_null`**: Checks if the database value is `NULL`
-  - **`_empty`**: Checks for `NULL`, empty string `""`, or empty array `[]`
-  
-  Use `_empty` when you want to exclude both null and blank values.
-</Callout>
-
-
-
----
-
-## Document: Complex Filters
-
-Combine multiple filters using logical operators
-
-URL: /examples/advanced/complex-filters
-
-
-# Complex Filters
-
-import { API_BASE_URL } from "../../../constants";
-
-Combine multiple filter conditions using logical operators like `_and` and `_or` for complex queries.
-
-<OpenPlaygroundButton
-  server={API_BASE_URL}
-  url="/items/codex"
-  method="GET"
-  queryParams={[
-    { name: "filter", defaultValue: "{\"_and\":[{\"id\":{\"_gte\":1}},{\"name\":{\"_nnull\":true}}]}" },
-    { name: "fields", defaultValue: "id,name,description" },
-    { name: "limit", defaultValue: "10" }
-  ]}
-/>
-
-```bash
-GET /items/codex?filter={"_and":[{"id":{"_gte":1}},{"name":{"_nnull":true}}]}
-```
-
-## Logical Operators
-
-| Operator | Description |
-|----------|-------------|
-| `_and` | All conditions must match |
-| `_or` | At least one condition must match |
-
-## AND Example
-
-Find items with ID >= 100 AND name is not null:
-
-<OpenPlaygroundButton
-  server={API_BASE_URL}
-  url="/items/codex"
-  method="GET"
-  queryParams={[
-    { name: "filter", defaultValue: "{\"_and\":[{\"id\":{\"_gte\":100}},{\"name\":{\"_nnull\":true}}]}" },
-    { name: "fields", defaultValue: "id,name" },
-    { name: "limit", defaultValue: "10" }
-  ]}
-/>
-
-```bash
-GET /items/codex?filter={"_and":[{"id":{"_gte":100}},{"name":{"_nnull":true}}]}
-```
-
-## OR Example
-
-Find items with ID = 1 OR ID = 2:
-
-<OpenPlaygroundButton
-  server={API_BASE_URL}
-  url="/items/codex"
-  method="GET"
-  queryParams={[
-    { name: "filter", defaultValue: "{\"_or\":[{\"id\":{\"_eq\":1}},{\"id\":{\"_eq\":2}}]}" },
-    { name: "fields", defaultValue: "id,name" }
-  ]}
-/>
-
-```bash
-GET /items/codex?filter={"_or":[{"id":{"_eq":1}},{"id":{"_eq":2}}]}
-```
-
-## Nested Logical Operators
-
-Combine AND and OR for complex logic:
-
-<OpenPlaygroundButton
-  server={API_BASE_URL}
-  url="/items/codex"
-  method="GET"
-  queryParams={[
-    { name: "filter", defaultValue: "{\"_and\":[{\"name\":{\"_nnull\":true}},{\"_or\":[{\"id\":{\"_lte\":10}},{\"id\":{\"_gte\":100}}]}]}" },
-    { name: "fields", defaultValue: "id,name" },
-    { name: "limit", defaultValue: "10" }
-  ]}
-/>
-
-```bash
-GET /items/codex?filter={"_and":[{"name":{"_nnull":true}},{"_or":[{"id":{"_lte":10}},{"id":{"_gte":100}}]}]}
-```
-
-<Callout type="tip" title="Filter Syntax" icon>
-  For complex filters, use the JSON syntax instead of bracket notation. URL-encode the JSON when sending requests.
-</Callout>
-
-## Alternative: Bracket Notation
-
-For simpler AND conditions, bracket notation is cleaner:
-
-<OpenPlaygroundButton
-  server={API_BASE_URL}
-  url="/items/codex"
-  method="GET"
-  queryParams={[
-    { name: "filter[id][_gte]", defaultValue: "1" },
-    { name: "filter[name][_nnull]", defaultValue: "true" },
-    { name: "fields", defaultValue: "id,name" },
-    { name: "limit", defaultValue: "10" }
-  ]}
-/>
-
-```bash
-GET /items/codex?filter[id][_gte]=1&filter[name][_nnull]=true
-```
-
-<Callout type="note" title="When to Use JSON" icon>
-  Use JSON syntax when you need `_or` operators or nested logic. Use bracket notation for simple AND conditions.
-</Callout>
-
-
-
----
-
-## Document: Custom Transformations
-
-Apply custom width, height, and format transformations
-
-URL: /examples/assets/transformations
-
-
-# Custom Transformations
-
-Apply custom transformations to images using query parameters for width, height, format, and more.
-
-```bash
-GET /assets/{id}?width=800&height=600&fit=cover&format=webp&quality=80
-```
-
-## Transformation Parameters
-
-| Parameter | Description | Values |
-|-----------|-------------|--------|
-| `width` | Target width in pixels | Number |
-| `height` | Target height in pixels | Number |
-| `fit` | How to fit the image | `cover`, `contain`, `inside`, `outside` |
-| `format` | Output format | `jpg`, `png`, `webp`, `avif`, `tiff` |
-| `quality` | Compression quality | 1-100 |
-| `withoutEnlargement` | Don't upscale small images | `true`, `false` |
-
-## Fit Options
-
-<Callout type="info" title="Fit Modes" icon>
-
-- **`cover`**: Crop to fill exact dimensions (default)
-- **`contain`**: Fit within dimensions, may letterbox
-- **`inside`**: Like contain, but never upscale
-- **`outside`**: Like cover, but never downscale
-
-</Callout>
-
-## Examples
-
-### Resize to Width
-
-```bash
-GET /assets/{id}?width=400
-```
-
-### Resize with Aspect Ratio
-
-```bash
-GET /assets/{id}?width=800&height=600&fit=contain
-```
-
-### Convert to WebP
-
-```bash
-GET /assets/{id}?format=webp&quality=85
-```
-
-### Square Thumbnail
-
-```bash
-GET /assets/{id}?width=200&height=200&fit=cover
-```
-
-<Callout type="tip" title="Performance" icon>
-  Use `webp` or `avif` formats for smaller file sizes. They offer 25-35% better compression than JPEG with similar quality.
-</Callout>
-
-
-
----
-
-## Document: Sharp Transformations
-
-Use Sharp API for advanced image processing
-
-URL: /examples/assets/sharp
-
-
-# Sharp Transformations
-
-Apply advanced image transformations using the Sharp library's powerful API through the `transforms` parameter.
-
-```bash
-GET /assets/{id}?transforms=[["rotate",90],["blur",5]]
-```
-
-<Callout type="caution" title="JSON Syntax" icon>
-  The `transforms` parameter accepts a JSON array of operations. Each operation is an array with the method name and its arguments.
-</Callout>
-
-## Available Operations
-
-| Operation | Arguments | Description |
-|-----------|-----------|-------------|
-| `rotate` | `degrees` | Rotate image (90, 180, 270) |
-| `blur` | `sigma` | Gaussian blur (0.3-1000) |
-| `sharpen` | `sigma?`, `flat?`, `jagged?` | Sharpen image |
-| `flip` | — | Flip vertically |
-| `flop` | — | Flip horizontally |
-| `grayscale` | — | Convert to grayscale |
-| `negate` | — | Invert colors |
-| `normalize` | — | Enhance contrast |
-| `gamma` | `gamma` | Adjust gamma (1.0-3.0) |
-| `tint` | `{r,g,b}` | Apply color tint |
-
-## Examples
-
-### Rotate 90 Degrees
-
-```bash
-GET /assets/{id}?transforms=[["rotate",90]]
-```
-
-### Apply Blur
-
-```bash
-GET /assets/{id}?transforms=[["blur",10]]
-```
-
-### Grayscale
-
-```bash
-GET /assets/{id}?transforms=[["grayscale"]]
-```
-
-### Multiple Operations
-
-Chain multiple transformations:
-
-```bash
-GET /assets/{id}?transforms=[["rotate",90],["grayscale"],["blur",2]]
-```
-
-### Flip and Sharpen
-
-```bash
-GET /assets/{id}?transforms=[["flip"],["sharpen"]]
-```
-
-<Callout type="note" title="Order Matters" icon>
-  Transformations are applied in the order specified. `rotate` then `blur` produces different results than `blur` then `rotate`.
-</Callout>
-
-## Combine with Other Parameters
-
-Sharp transforms can be combined with standard parameters:
-
-```bash
-GET /assets/{id}?width=800&format=webp&transforms=[["grayscale"],["sharpen"]]
-```
-
-
-
----
-
-## Document: Image Presets
-
-Retrieve images using transformation presets
-
-URL: /examples/assets/presets
-
-
-# Image Presets
-
-Retrieve images using pre-configured transformation presets. Presets allow you to consistently resize and transform images without specifying parameters each time.
-
-```bash
-GET /assets/{id}?key=s512
-```
-
-<Callout type="note" title="Available Presets" icon>
-  Available presets: `s128`, `s256`, `s512`, `s1024` — each resizes the image to the specified width while maintaining aspect ratio.
-</Callout>
-
-## Preset Reference
-
-| Preset | Width | Use Case |
-|--------|-------|----------|
-| `s128` | 128px | Thumbnails, avatars |
-| `s256` | 256px | Small previews |
-| `s512` | 512px | Medium previews, cards |
-| `s1024` | 1024px | Large images, hero sections |
-
-## Example URLs
-
-```bash
-# Thumbnail (128px)
-GET /assets/a1b2c3d4-e5f6-7890-1234-abcdef123456?key=s128
-
-# Card preview (512px)
-GET /assets/a1b2c3d4-e5f6-7890-1234-abcdef123456?key=s512
-
-# Full size (1024px)
-GET /assets/a1b2c3d4-e5f6-7890-1234-abcdef123456?key=s1024
-```
-
-<Callout type="tip" title="Caching" icon>
-  Transformed images are cached on the server. Subsequent requests for the same preset are served instantly.
-</Callout>
 
