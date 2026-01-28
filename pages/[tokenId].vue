@@ -535,7 +535,7 @@
         <h2 class="text-2xl font-bold mb-6">Agent Frameworks</h2>
 
         <!-- Moltbot Accordion -->
-        <div v-if="latestMoltbotVersion" class="border-t border-white/10 pt-3">
+        <div v-if="latestMoltbotVersion" class="pt-3">
           <button
             @click="toggleMoltbotAccordion"
             class="flex w-full items-center justify-between py-2 text-left"
