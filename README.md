@@ -19,7 +19,7 @@ What started as a simple collection browser evolved into an **immersive art-cent
 ### Why This Matters
 
 The Museum of Crypto Art isn't just archiving the past—it's **seeding the future**. Art DeCC0s are designed to be:
-- **AI Agent Characters** - Complete with ElizaOS profiles, system prompts, and conversation examples
+- **AI Agent Characters** - Complete with Moltbot files (SOUL.md/IDENTITY.md) and ElizaOS profiles with system prompts and conversation examples
 - **Storytelling Tools** - Rich biographies and personalities for writers and worldbuilders
 - **Art Assets** - Layered components (character + background) for remixing
 - **Cultural References** - Deep metadata connecting crypto art history with broader culture
@@ -52,7 +52,7 @@ The Museum of Crypto Art isn't just archiving the past—it's **seeding the futu
   - Hover over decc0s to swap between full composite and character-only views
   - Click sparkles icon to toggle this feature on/off
   - Purple border indicates images in character-only mode
-  
+
 - **🖥️ Museum Mode**
   - Full browser fullscreen experience
   - Immersive viewing with floating controls
@@ -102,7 +102,18 @@ Each Art DeCC0 includes extensive metadata:
 - **Artistic Preferences** - Loved/liked/disliked art styles, crypto art focus
 - **Favorite Things** - Books, crypto artists, colors, animals
 - **Writing Behavior** - Communication style, metaphor domains, unique vocabulary
-- **ElizaOS Agent Profile** - Complete AI agent configuration including system prompts, bio, topics, knowledge, and conversation examples
+
+### 🤖 Agent Frameworks Integration
+Each Art DeCC0 detail page includes a dedicated **Agent Frameworks** section with AI-ready character files:
+
+- **Quick Access** - "Integrate" button in header jumps directly to agent configuration
+- **Moltbot Files** (open by default):
+  - **IDENTITY.md** - Name, emoji, self-identity, residence, and characterization details
+  - **SOUL.md** - Character personality, core temperament, voice rules, and behavior guidelines
+  - **One-Click Copy** - Copy entire markdown files to clipboard instantly
+  - **One-Click Download** - Download as IDENTITY.md or SOUL.md files
+  - **Version Indicator** - Shows current moltbot version (e.g., v0.1)
+- **ElizaOS Agent Profile** - Complete AI agent configuration including system prompts, bio, topics, knowledge, adjectives, style guidelines, and conversation examples
 
 ### 🎨 Technical Highlights
 - **Server-Side Rendering** - Nuxt 3 SSR with Vue 3 Composition API for instant page shells
@@ -197,7 +208,12 @@ The SSR build generates a Node.js server in `.output/server/` that handles both 
 
 ### Key Components
 - `pages/index.vue` - Gallery view with filtering, zoom, quality, and interactive features
-- `pages/[tokenId].vue` - Detailed character profile page with hover preview and ENS-resolved owner display
+- `pages/[tokenId].vue` - Detailed character profile page with:
+  - Codex Data section (biography, visual appearance, favorites, writing behavior)
+  - Agent Frameworks section (Moltbot files + ElizaOS profiles)
+  - "Integrate" quick-link button to Agent Frameworks
+  - Copy/download functionality for IDENTITY.md and SOUL.md
+  - ENS-resolved owner display
 - `components/filters/FilterSidebar.vue` - Filter controls and search with multi-select checkboxes and ENS name display
 - `components/ui/*` - Reusable UI components (Table, Button, Input, Skeleton)
 - `composables/useEnsResolver.ts` - ENS resolution composable with caching and batch resolution
@@ -251,7 +267,7 @@ The Codex Explorer achieves exceptional performance by:
 ### Searching for DeCC0s
 - **By ID**: Type a number (e.g., `420`) to find exact token
 - **By Name**: Type text (e.g., `Chayachi`) to find all matching names
-- **By Owner**: 
+- **By Owner**:
   - Paste Ethereum address (e.g., `0x614a...`)
   - Type ENS name (e.g., `vitalik.eth`)
   - Search works with both full addresses and ENS names
@@ -266,11 +282,22 @@ The Codex Explorer achieves exceptional performance by:
 
 ### Viewing Details
 1. Click any Art DeCC0 in the gallery
-2. View comprehensive character information
-3. Explore biography, personality, and agent profiles
+2. View comprehensive character information in the **Codex Data** section
+3. Explore biography, personality, visual appearance, and writing behavior
 4. Download full-resolution IPFS images
 5. View component layers (character and background)
 6. Access external links (Raster.art marketplace)
+
+### Agent Frameworks Integration
+1. Click "Integrate" button (top right) to jump to Agent Frameworks section
+2. **Moltbot** accordion (open by default):
+   - View IDENTITY.md and SOUL.md content in formatted code blocks
+   - Click "Copy" to copy markdown to clipboard
+   - Click "Download" to save as IDENTITY.md or SOUL.md file
+3. **ElizaOS** accordion:
+   - View complete agent profile with system prompts
+   - Explore bio, adjectives, topics, style, and knowledge
+   - Browse example conversations
 
 ### Keyboard Shortcuts
 - **ESC** - Exit Museum Mode and fullscreen
@@ -282,6 +309,8 @@ The Codex Explorer achieves exceptional performance by:
 - **Owner Filtering**: Paste any Ethereum address or type ENS names to see all DeCC0s owned by that wallet
 - **ENS Names**: Addresses with ENS names are displayed with their human-readable names automatically
 - **Multi-Select**: Combine multiple filters to find specific trait combinations
+- **Agent Integration**: Use the "Integrate" button to quickly access Moltbot and ElizaOS files for AI agent setup
+- **Moltbot Files**: Download SOUL.md and IDENTITY.md with one click for use in AI agent frameworks
 
 ---
 
@@ -295,7 +324,10 @@ This frontend consumes the **MOCA Codex API** built on Directus. For comprehensi
 
 ### Key API Endpoints Used
 - `GET /items/codex` - Fetch all Art DeCC0 metadata with nested thumbnail objects (full composite, character-only, background)
-- `GET /items/codex/{id}` - Fetch single Art DeCC0 by token ID (includes owner information and all thumbnails)
+- `GET /items/codex/{id}` - Fetch single Art DeCC0 by token ID including:
+  - Owner information and all thumbnails
+  - `moltbot` - Versioned soul and identity markdown files (e.g., `moltbot.v0.1.soul`, `moltbot.v0.1.identity`)
+  - `agent_profiles` - ElizaOS agent configuration
 - `GET /assets/{id}?key={preset}` - Fetch optimized images with Directus transformations
   - `?key=s256` - 256px preset (default quality)
   - `?key=s512` - 512px preset
@@ -371,7 +403,7 @@ Attach these files to your AI coding sessions (Cursor, GitHub Copilot, Claude, e
 # "What endpoints are available for querying codex items?"
 
 # Complex query building? Use llms-full.txt:
-# "Generate a TypeScript function to query DeCC0s by character type 
+# "Generate a TypeScript function to query DeCC0s by character type
 #  with pagination, sorting by timestamp, and field selection"
 
 # Type generation? Use oas.json:
@@ -461,7 +493,7 @@ if (characterSet) {
   const matchesAlien = characterSet.has('Alien') && token.background_category === 'Alien';
   const matchesApe = characterSet.has('Ape') && token.background_category === 'Ape';
   const matchesNormalChar = characterSet.has(token.decc0_type);
-  
+
   // Token must match at least one selected character
   if (!matchesAlien && !matchesApe && !matchesNormalChar) {
     return false;
@@ -514,7 +546,7 @@ if (characterSet) {
   const matchesAlien = characterSet.has('Alien') && token.background_category === 'Alien';
   const matchesApe = characterSet.has('Ape') && token.background_category === 'Ape';
   const matchesNormalChar = characterSet.has(token.decc0_type);
-  
+
   if (!matchesAlien && !matchesApe && !matchesNormalChar) {
     return false;
   }
@@ -610,7 +642,7 @@ Time 2s:  vitalik.eth (150)  ← All done
 
 **Key Components:**
 - `composables/useEnsResolver.ts` - ENS resolution logic with caching
-- `pages/index.vue` - Gallery with prioritized batch resolution  
+- `pages/index.vue` - Gallery with prioritized batch resolution
 - `pages/[tokenId].vue` - Detail page with ENS display
 - `components/filters/FilterSidebar.vue` - Filter UI with ENS names
 
@@ -638,7 +670,7 @@ const publicClient = createPublicClient({
 ```typescript
 // Process in order: biggest holders first
 for (let batch of batches) {
-  await Promise.all(batch.map(addr => 
+  await Promise.all(batch.map(addr =>
     publicClient.getEnsName({ address: addr })
   ));
   // UI updates after each batch completes
