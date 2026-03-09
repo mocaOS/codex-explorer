@@ -17,7 +17,7 @@
             Art DeCC0 #{{ token.codexData.id }}
           </h1>
           <a
-            v-if="latestMoltbotVersion || token.codexData?.agent_profiles"
+            v-if="latestSoulBasedVersion || token.codexData?.agent_profiles"
             href="#agent-frameworks"
             class="flex items-center gap-2 px-4 py-2 text-sm font-medium rounded-md border border-white/20 hover:bg-white/10 transition-colors"
           >
@@ -530,21 +530,21 @@
     </div>
 
     <!-- Agent Frameworks Section -->
-    <div id="agent-frameworks" v-if="latestMoltbotVersion || token.codexData.agent_profiles" class="container mt-8 scroll-mt-4">
+    <div id="agent-frameworks" v-if="latestSoulBasedVersion || token.codexData.agent_profiles" class="container mt-8 scroll-mt-4">
       <div class="rounded-md border border-black p-4 bg-black">
         <h2 class="text-2xl font-bold mb-6">Agent Frameworks</h2>
 
-        <!-- Moltbot Accordion -->
-        <div v-if="latestMoltbotVersion" class="pt-3">
+        <!-- SOUL-based Accordion -->
+        <div v-if="latestSoulBasedVersion" class="pt-3">
           <button
-            @click="toggleMoltbotAccordion"
+            @click="toggleSoulBasedAccordion"
             class="flex w-full items-center justify-between py-2 text-left"
-            :aria-expanded="isMoltbotOpen"
+            :aria-expanded="isSoulBasedOpen"
           >
-            <h3 class="text-lg font-bold">Moltbot</h3>
+            <h3 class="text-lg font-bold">SOUL-based: Hermes Agent, Openclaw, etc.</h3>
             <svg
               class="h-5 w-5 transition-transform duration-300"
-              :class="{ 'rotate-180': isMoltbotOpen }"
+              :class="{ 'rotate-180': isSoulBasedOpen }"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -553,16 +553,44 @@
             </svg>
           </button>
 
-          <div v-show="isMoltbotOpen" class="pt-3">
-            <p class="text-xs text-white/50 mb-4">Version: {{ latestMoltbotVersion }}</p>
+          <div v-show="isSoulBasedOpen" class="pt-3">
+            <p class="text-xs text-white/50 mb-4">Version: {{ latestSoulBasedVersion }}</p>
+
+            <!-- SOUL.md Section -->
+            <div v-if="latestSoulBased?.soul" class="mb-6">
+              <div class="flex items-center justify-between mb-2">
+                <h4 class="text-sm font-semibold uppercase text-white/70">SOUL.md</h4>
+                <div class="flex gap-2">
+                  <button
+                    @click="copyToClipboard(latestSoulBased.soul, 'soul')"
+                    class="flex items-center gap-1 px-3 py-1 text-xs rounded border border-white/20 hover:bg-white/10 transition-colors"
+                  >
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+                    </svg>
+                    {{ copyStatus === 'soul' ? 'Copied!' : 'Copy' }}
+                  </button>
+                  <button
+                    @click="downloadFile(latestSoulBased.soul, 'SOUL.md')"
+                    class="flex items-center gap-1 px-3 py-1 text-xs rounded border border-white/20 hover:bg-white/10 transition-colors"
+                  >
+                    <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                    </svg>
+                    Download
+                  </button>
+                </div>
+              </div>
+              <pre class="bg-black/50 border border-white/10 rounded-md p-4 text-xs text-white/80 font-mono overflow-x-auto max-h-96 overflow-y-auto whitespace-pre-wrap">{{ latestSoulBased.soul }}</pre>
+            </div>
 
             <!-- IDENTITY.md Section -->
-            <div v-if="latestMoltbot?.identity" class="mb-6">
+            <div v-if="latestSoulBased?.identity" class="mb-3">
               <div class="flex items-center justify-between mb-2">
                 <h4 class="text-sm font-semibold uppercase text-white/70">IDENTITY.md</h4>
                 <div class="flex gap-2">
                   <button
-                    @click="copyToClipboard(latestMoltbot.identity, 'identity')"
+                    @click="copyToClipboard(latestSoulBased.identity, 'identity')"
                     class="flex items-center gap-1 px-3 py-1 text-xs rounded border border-white/20 hover:bg-white/10 transition-colors"
                   >
                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -571,7 +599,7 @@
                     {{ copyStatus === 'identity' ? 'Copied!' : 'Copy' }}
                   </button>
                   <button
-                    @click="downloadFile(latestMoltbot.identity, 'IDENTITY.md')"
+                    @click="downloadFile(latestSoulBased.identity, 'IDENTITY.md')"
                     class="flex items-center gap-1 px-3 py-1 text-xs rounded border border-white/20 hover:bg-white/10 transition-colors"
                   >
                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -581,16 +609,19 @@
                   </button>
                 </div>
               </div>
-              <pre class="bg-black/50 border border-white/10 rounded-md p-4 text-xs text-white/80 font-mono overflow-x-auto max-h-96 overflow-y-auto whitespace-pre-wrap">{{ latestMoltbot.identity }}</pre>
+              <pre class="bg-black/50 border border-white/10 rounded-md p-4 text-xs text-white/80 font-mono overflow-x-auto max-h-96 overflow-y-auto whitespace-pre-wrap">{{ latestSoulBased.identity }}</pre>
+            </div>
+              </div>
+              <pre class="bg-black/50 border border-white/10 rounded-md p-4 text-xs text-white/80 font-mono overflow-x-auto max-h-96 overflow-y-auto whitespace-pre-wrap">{{ latestSoulBased.identity }}</pre>
             </div>
 
             <!-- SOUL.md Section -->
-            <div v-if="latestMoltbot?.soul" class="mb-3">
+            <div v-if="latestSoulBased?.soul" class="mb-3">
               <div class="flex items-center justify-between mb-2">
                 <h4 class="text-sm font-semibold uppercase text-white/70">SOUL.md</h4>
                 <div class="flex gap-2">
                   <button
-                    @click="copyToClipboard(latestMoltbot.soul, 'soul')"
+                    @click="copyToClipboard(latestSoulBased.soul, 'soul')"
                     class="flex items-center gap-1 px-3 py-1 text-xs rounded border border-white/20 hover:bg-white/10 transition-colors"
                   >
                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -599,7 +630,7 @@
                     {{ copyStatus === 'soul' ? 'Copied!' : 'Copy' }}
                   </button>
                   <button
-                    @click="downloadFile(latestMoltbot.soul, 'SOUL.md')"
+                    @click="downloadFile(latestSoulBased.soul, 'SOUL.md')"
                     class="flex items-center gap-1 px-3 py-1 text-xs rounded border border-white/20 hover:bg-white/10 transition-colors"
                   >
                     <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -609,7 +640,7 @@
                   </button>
                 </div>
               </div>
-              <pre class="bg-black/50 border border-white/10 rounded-md p-4 text-xs text-white/80 font-mono overflow-x-auto max-h-96 overflow-y-auto whitespace-pre-wrap">{{ latestMoltbot.soul }}</pre>
+              <pre class="bg-black/50 border border-white/10 rounded-md p-4 text-xs text-white/80 font-mono overflow-x-auto max-h-96 overflow-y-auto whitespace-pre-wrap">{{ latestSoulBased.soul }}</pre>
             </div>
           </div>
         </div>
@@ -891,7 +922,7 @@ const isThingsILoveOpen = ref(false);
 const isBiographyExpanded = ref(false);
 const isWritingOpen = ref(false);
 const isAdditionalInfoOpen = ref(false);
-const isMoltbotOpen = ref(true);
+const isSoulBasedOpen = ref(true);
 const isThumbnailHovered = ref(false);
 const openMessageExampleIndex = ref<number | null>(null);
 
@@ -902,12 +933,12 @@ const toggleThingsILoveAccordion = () => { isThingsILoveOpen.value = !isThingsIL
 const toggleBiography = () => { isBiographyExpanded.value = !isBiographyExpanded.value; };
 const toggleWritingAccordion = () => { isWritingOpen.value = !isWritingOpen.value; };
 const toggleAdditionalInfoAccordion = () => { isAdditionalInfoOpen.value = !isAdditionalInfoOpen.value; };
-const toggleMoltbotAccordion = () => { isMoltbotOpen.value = !isMoltbotOpen.value; };
+const toggleSoulBasedAccordion = () => { isSoulBasedOpen.value = !isSoulBasedOpen.value; };
 const toggleMessageExample = (index: number) => {
   openMessageExampleIndex.value = openMessageExampleIndex.value === index ? null : index;
 };
 
-// Copy and download helpers for Moltbot files
+// Copy and download helpers for SOUL-based files
 const copyStatus = ref<string | null>(null);
 
 const copyToClipboard = async (content: string, label: string) => {
@@ -934,16 +965,16 @@ const downloadFile = (content: string, filename: string) => {
   URL.revokeObjectURL(url);
 };
 
-// Moltbot computed properties
-const latestMoltbotVersion = computed(() => {
+// SOUL-based computed properties
+const latestSoulBasedVersion = computed(() => {
   if (!token.value?.codexData?.moltbot) return null;
   const versions = Object.keys(token.value.codexData.moltbot).sort();
   return versions[versions.length - 1];
 });
 
-const latestMoltbot = computed(() => {
-  if (!latestMoltbotVersion.value || !token.value?.codexData?.moltbot) return null;
-  return token.value.codexData.moltbot[latestMoltbotVersion.value];
+const latestSoulBased = computed(() => {
+  if (!latestSoulBasedVersion.value || !token.value?.codexData?.moltbot) return null;
+  return token.value.codexData.moltbot[latestSoulBasedVersion.value];
 });
 
 const imageUrl = computed(() => {
